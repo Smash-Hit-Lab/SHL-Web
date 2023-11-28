@@ -1,0 +1,169 @@
+<script>
+	var DiscussionChatStyle = false;
+	
+	function ds_request(verb, url, func, body) {
+		/**
+		 * Make an xhr request using the given verb, url and function
+		 */
+		
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = func;
+		xhr.open(verb, url, true);
+		xhr.send(body);
+	}
+	
+	function escape_string(string) {
+		// letting the browser do this for us
+		// http://stackoverflow.com/questions/3043775
+		let p = document.createElement("p");
+		p.appendChild(document.createTextNode(string));
+		return p.innerHTML;
+	}
+	
+	function format_time(t) {
+		let d = new Date(t * 1000);
+		
+		return d.toLocaleString();
+	}
+	
+	function ds_render_actions(actions, index, author) {
+		if (DiscussionChatStyle) { return ""; }
+		
+		let string = "<p style=\"margin-bottom: 0;\">";
+		
+		// Render each action
+		for (let i = 0; i < actions.length; i++) {
+			switch (actions[i]) {
+				case "like": {
+					string += "";
+					break;
+				}
+				case "hide": {
+					string += "<button class=\"button secondary\" onclick=\"ds_hide(" + index + ");\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">delete</span> Delete</button> ";
+					break;
+				}
+				case "reply": {
+					string += "<button class=\"button secondary\" onclick=\"ds_add_reply('" + author + "');\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">reply</span> Reply</button> ";
+					break;
+				}
+				default: {
+					break;
+				}
+			}
+		}
+		
+		return string + "</p>";
+	}
+	
+	function ds_render_comment(hidden, image, author, display, time, body, actions, index, badge, pronouns) {
+		return "<div class=\"comment-card\" " + (hidden ? "style=\"opacity: 0.6;\"" : "") + "><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./?u=" + author + "\">" + display + "</a> " + badge + "</p></div><div class=\"comment-info-block comment-side-info\"><p>@" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div>";
+	}
+	
+	function ds_load_handle() {
+		if (this.readyState != 4) {
+			return;
+		}
+		
+		let discussion = document.getElementById("discussion-" + DiscussionID);
+		
+		switch (this.status) {
+			case 200: {
+				let data = JSON.parse(this.responseText);
+				
+				discussion.innerHTML = "";
+				
+				for (let i = 0; i < data["comments"].length; i++) {
+					let comment = data["comments"][(DiscussionBackwards ? (data["comments"].length - i - 1) : i)];
+					let image = escape_string(comment["image"]);
+					let author = escape_string(comment["author"]);
+					let display = escape_string(comment["display"]);
+					let body = comment["body"]; // Will already be escaped
+					let date = format_time(comment["updated"]);
+					
+					discussion.innerHTML += ds_render_comment(comment["hidden"], image, author, display, date, body, comment["actions"], comment["index"], comment["badge"], comment["pronouns"]);
+				}
+				
+				UserSAK = data["next_sak"];
+				
+				break;
+			}
+			default:
+				discussion.innerHTML = "<p><i>Error loading comments</i></p>";
+				break;
+		}
+	}
+	
+	function ds_load() {
+		ds_request("GET", "./?a=discussion_poll&id=" + DiscussionID + "&index=0" + (window.ShowHidden ? "&hidden=1" : ""), ds_load_handle);
+	}
+	
+	function ds_clear() {
+		let discussion = document.getElementById("discussion-" + DiscussionID);
+		discussion.innerHTML = "<p style=\"text-align: center;\"><i>Discussions are loading...</i></p>";
+	}
+	
+	function ds_add_reply(user) {
+		let box = document.getElementById("discussions-" + DiscussionID + "-entry");
+		box.value = "@" + user + " " + box.value;
+		let url = window.location.href;
+		window.location = (url.split('#')[0]) + "#discussion-" + DiscussionID + "-box";
+	}
+	
+	function ds_update_error(code, text) {
+		let entry = document.getElementById("discussions-" + DiscussionID + "-error");
+		entry.innerHTML = "<i>" + text + " (Status " + typeof(code) + " " + code + ")</i>";
+	}
+	
+	function ds_update_handle() {
+		if (this.readyState != 4) {
+			return;
+		}
+		
+		if (this.status == 200) {
+			let data = JSON.parse(this.responseText);
+			
+			if (data["error"] == "done") {
+				let entry = document.getElementById("discussions-" + DiscussionID + "-entry");
+				entry.value = "";
+			}
+			else {
+				ds_update_error(data["error"], data["message"]);
+			}
+		}
+		else {
+			ds_update_error(this.status, "Sorry, there was a network error while submitting your comment. Please try again.");
+		}
+		
+		setTimeout(ds_load, 1);
+	}
+	
+	function ds_update() {
+		let body = document.getElementById("discussions-" + DiscussionID + "-entry").value;
+		ds_request("POST", "./?a=discussion_update&id=" + DiscussionID + "&index=-1&key=" + UserSAK + "&api=1", ds_update_handle, body);
+	}
+	
+	function ds_hide_handle() {
+		console.log(this.responseText);
+		setTimeout(ds_load, 1);
+	}
+	
+	function ds_hide(index) {
+		let data = {
+			id: DiscussionID,
+			index: index,
+			sak: UserSAK
+		};
+		
+		ds_request("POST", "./?a=discussion-hide", ds_hide_handle, JSON.stringify(data));
+	}
+	
+	function ds_toggle_hidden() {
+		window.ShowHidden = !window.ShowHidden;
+		ds_clear();
+		ds_load();
+	}
+	
+	if (shl_get_param("a") == "forum-view") {
+	    setInterval(ds_load, 6000);
+	}
+</script>

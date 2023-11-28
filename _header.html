@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="description" content="A passionate community of creators, programmers and players of the mobile game Smash Hit.">
+		<meta name="keywords" content="smash hit, smash, hit, mobile, game, mobile game, glass, glass game, break glass, break glass game, break, destruction, destruction game, modding, mods, mod, modification, smash hit lab, lab">
+		<meta name="author" content="Smash Hit Lab">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="shortcut icon" type="image/png" href="./favicon.png"/>
+		<link rel="stylesheet" href="./?a=site-css"/>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<script src="./?a=site-js" onload="shl_main();"></script>
+		<?php
+		global $gTitle;
+		
+		if (!isset($gTitle)) {
+			echo "<title>" . get_site_name() . "</title>";
+		}
+		else {
+			echo "<title>$gTitle &mdash; " . get_site_name() . "</title>";
+		}
+		?>
+		<script>
+			// BUG If you expand then collapse and then restore the window, the
+			// top bar is still explicitly marked as hidden.
+			function shownavbar() {
+				let navbar = document.getElementById("navbar");
+				let displayed = (navbar.style.display != "none");
+				
+				if (!displayed) {
+					navbar.style.display = "inherit";
+				}
+				else {
+					navbar.style.display = "none";
+				}
+			}
+		</script>
+		<style>
+			.shl-old-profile-dropdown-button {
+				position: relative;
+				display: inline-block;
+				text-align: left;
+			}
+			
+			.shl-old-profile-dropdown-main {
+				display: none;
+				position: absolute;
+				border-radius: 0.75em;
+				border: 1px solid var(--colour-background-light-b);
+				padding: 0.75em 0.75em;
+				background: var(--colour-background-dark-b);
+				backdrop-filter: blur(15px);
+				box-shadow: 0 0.4em 0.7em #0005;
+				transition: display 0.2s;
+			}
+			
+			.shl-old-profile-dropdown-main.right {
+				right: 1px;
+			}
+			
+			.shl-old-profile-dropdown-main.left {
+				left: 1px;
+			}
+			
+			.shl-old-profile-dropdown-button:hover .shl-old-profile-dropdown-main {
+				display: block;
+			}
+			
+			.shl-old-profile-dropdown-item {
+				border-radius: 0.75em;
+				display: grid;
+				grid: auto / 32px auto;
+				height: 32px;
+				padding: 0.5em 0.75em;
+				border: 1px solid transparent;
+				transition: background 0.2s, border 0.2s;
+			}
+			
+			.shl-old-profile-dropdown-item:hover {
+				background: var(--colour-background-light-b);
+				border: 1px solid var(--colour-background-light);
+			}
+			
+			.shl-old-profile-dropdown-item-icon {
+				grid-column: 1;
+			}
+			
+			.shl-old-profile-dropdown-item-text {
+				text-align: left;
+				margin-left: 0.25em;
+				grid-column: 2;
+			}
+		</style>
+	</head>
+	<body id="body" style="margin: 0; border: 0;">
+		<div id="navbar-button" class="show-navbar-section" onclick="shownavbar();">
+			<div class="cb-logo-item">Explore <?php echo get_site_name(); ?> <span class="material-icons" style="position: relative; top: 4px; left: 10px;">arrow_forward</span></div>
+		</div>
+		<div id="navbar" class="navbar-section">
+			<div class="header-container">
+				<div class="header-container-left">
+					<!-- LOGO -->
+					<img width="40" height="40" style="position: fixed;" src="./favicon.png"/>
+					<!-- LOGO -->
+					<div style="display: inline-block; width: 48px;"></div>
+					<div class="cb-logo-item"><?php echo get_site_name(); ?></div>
+					<?php
+					function header_item(string $icon, string $title, string $link) : void {
+						echo "<div class=\"cb-top-item\"><a href=\"$link\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">$icon</span> $title</a></div>";
+					}
+					
+					function nav_dropdown_item(string $icon, string $title, string $link) : void {
+						if ($link) {
+							echo "<a href=\"$link\">";
+						}
+						
+						echo "<div class=\"shl-old-profile-dropdown-item\">";
+						echo "<div class=\"shl-old-profile-dropdown-item-icon\">";
+						echo "<span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">$icon</span>";
+						echo "</div>";
+						echo "<div class=\"shl-old-profile-dropdown-item-text\">";
+						echo "<span>$title</span>";
+						echo "</div>";
+						echo "</div>";
+						
+						if ($link) {
+							echo "</a>";
+						}
+					}
+					
+					//header_item("home", "Home", "./?p=home");
+					header_item("newspaper", "News", "./?n=home");
+					header_item("science", "Mods", "./?a=list_mods");
+					header_item("forum", "Forum", "./?a=forum-home");
+					//if (get_name_if_authed()) {
+					header_item("handyman", "Services", "./?a=services-home");
+					//}
+					
+					echo "<div class=\"cb-top-item\">";
+					echo "<div class=\"shl-old-profile-dropdown-button\">";
+					echo "<a href=\"#\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">auto_awesome</span> More</a>";
+					echo "<div class=\"shl-old-profile-dropdown-main left\">";
+					nav_dropdown_item("description", "Wiki", "https://smashhit.wikitide.org/");
+					nav_dropdown_item("play_circle_filled", "YouTube", "https://youtube.com/@SmashHitLab");
+					nav_dropdown_item("forum", "Discord", "https://discord.gg/7kra7Z3UNn");
+					echo "</div>";
+					echo "</div>";
+					echo "</div>";
+					
+					?>
+				</div>
+				<div class="header-container-right">
+					<div class="cb-logo-item">&ZeroWidthSpace;</div><!--amazing hack-->
+					<?php
+						$user_name = get_name_if_authed();
+						
+						
+						
+						if ($user_name) {
+							display_notification_charm($user_name);
+							
+							$u = new User($user_name);
+							$image = $u->get_image();
+							
+							echo "<div class=\"cb-top-item\">";
+							echo "<div class=\"shl-old-profile-dropdown-button\">";
+							echo "<img class=\"navbar-profile\" src=\"$image\"/>";
+							echo "<div class=\"shl-old-profile-dropdown-main right\">";
+							
+							nav_dropdown_item("account_circle", "Profile", "/?u=$user_name");
+							if ($u->is_admin()) {
+								nav_dropdown_item("apps", "Dashboard", "/?a=admin_dashboard");
+							}
+							nav_dropdown_item("manage_accounts", "Account", "/?a=edit_account");
+							nav_dropdown_item("notifications", "Notifications", "/?a=notifications");
+							if (!$u->has_role("impersonateable")) {
+								nav_dropdown_item("logout", "Logout", "/?a=logout");
+							}
+							else {
+								nav_dropdown_item("logout", "Switch back", "/?a=admin-return");
+							}
+							
+							echo "</div>";
+							echo "</div>";
+							echo "</div>";
+						} else {
+							header_item("login", "Login", "./?a=auth-login");
+							header_item("person_add", "Register", "./?a=auth-register&usebootstrap=1");
+						}
+					?>
+				</div>
+			</div>
+		</div>
+		<div class="main-section nc-top nc-bottom">

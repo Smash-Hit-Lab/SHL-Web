@@ -1,0 +1,36 @@
+<script>
+function cancel_edit() {
+	window.history.back();
+}
+
+function disable_scroll() {
+	document.getElementById("body").style.overflow = "hidden";
+}
+
+disable_scroll();
+</script>
+<!-- <div class="editor-main-ving"></div> -->
+<form action="./?a=save_news&amp;n=<?= $this->name ?>" method="post">
+	<div class="editor-main">
+		<div class="editor-main-toolbar">
+			<div class="editor-main-toolbar-back">
+				<button type="button" class="button secondary editor-main-control-back" onclick="cancel_edit()"><span class="material-icons" style="position: relative; top: 5px; left: -5px;">arrow_back</span></button>
+			</div>
+			<div class="editor-main-toolbar-title">
+				<input name="title" class="editor-main-control editor-main-control-title" type="text" placeholder="Page title" value="<?= $this->title ?>"/>
+			</div>
+			<div class="editor-main-toolbar-visible">
+				<select name="permissions" class="editor-main-control">
+					<option value="private" <?php echo ($this->permissions == "private" ? "selected" : ""); ?>>Private</option>
+					<option value="public" <?php echo ($this->permissions == "public" ? "selected" : ""); ?>>Public</option>
+				</select>
+			</div>
+			<div class="editor-main-toolbar-button">
+				<input type="submit" class="editor-main-control-submit" value="Save"/>
+			</div>
+		</div>
+		<div class="editor-main-text">
+			<textarea name="body" class="editor-main-text-box"><?= htmlspecialchars($this->body) ?></textarea>
+		</div>
+	</div>
+</form>
