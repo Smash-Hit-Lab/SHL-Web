@@ -15,6 +15,7 @@ class Token {
 	public $expire; // Expiration date of the token
 	public $ip; // IP the token was created under
 	public $lockbox; // IP the token was created under10
+	
 	function __construct(string $name = null) {
 		$db = new Database("token");
 		
@@ -211,6 +212,8 @@ function find_pfp($user) : string | null {
 	 * One time find a user's pfp url
 	 */
 	
+	$fb = "./?a=generate-logo-coloured&seed=$user->name";
+	
 	switch ($user->image_type) {
 		case "gravatar": {
 			return get_gravatar_image($user->email);
@@ -219,10 +222,10 @@ function find_pfp($user) : string | null {
 			return get_yt_image($user->youtube);
 		}
 		case "url": {
-			return $user->image;
+			return (strpos($user->image, "cdn.discordapp.com") < 0) ? $user->image : $fb;
 		}
 		default: {
-			return "./?a=generate-logo-coloured&seed=$user->name";
+			return $fb;
 		}
 	}
 }
@@ -456,8 +459,8 @@ class User {
 			
 			// Schema R3: Account database
 			
-			// Refresh PFP if it's been more than a week
-			// if ($this->image_age < (time() - 60 * 60 * 24 * 7)) {
+			// Refresh PFP if it's been more than two weeks
+			// if (time() > ($this->image_age + 60 * 60 * 24 * 14)) {
 			// 	$this->update_image();
 			// 	$this->save();
 			// }
@@ -478,7 +481,7 @@ class User {
 			$this->edit_locked = false;
 			$this->wall = random_discussion_name();
 			$this->youtube = "";
-			$this->image_type = "gravatar";
+			$this->image_type = "generated";
 			$this->image = "";
 			$this->image_age = time();
 			$this->accent = null;

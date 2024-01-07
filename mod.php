@@ -34,6 +34,7 @@ class ModPage {
 	public $reason;
 	public $security;
 	public $reviews;
+	public $visibility;
 	
 	function __construct(string $package, int $revision = -1) {
 		$db = new RevisionDB("mod");
@@ -59,6 +60,7 @@ class ModPage {
 			$this->reviews = property_exists($mod, "reviews") ? $mod->reviews : random_discussion_name();
 			$this->image = property_exists($mod, "image") ? $mod->image : "";
 			$this->colour = property_exists($mod, "colour") ? $mod->colour : "";
+			$this->visibility = property_exists($mod, "visibility") ? $mod->visibility : "public";
 			
 			// If there weren't discussions before, save them now.
 			if (!property_exists($mod, "reviews")) {
@@ -88,6 +90,7 @@ class ModPage {
 			$this->reviews = random_discussion_name();
 			$this->image = "";
 			$this->colour = "";
+			$this->visibility = "public";
 		}
 	}
 	
@@ -147,7 +150,6 @@ class ModPage {
 			if (in_array($stalker->name, $this->creators, true) || $stalker->is_mod()) {
 			    echo "<a href=\"./?a=edit_mod&m=$this->package\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Edit this mod</button></a> ";
 			}
-			//echo "<button id=\"shl-magic-editor-main-button\" class=\"button secondary\" onclick=\"shl_magic_editor_begin();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Magic editor (beta)</button> ";
 			echo "<a href=\"./?a=mod_history&m=$this->package\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">history</span> History</button></a> ";
 			
 			if (get_name_if_mod_authed()) {
@@ -167,8 +169,6 @@ class ModPage {
 			echo "<div id=\"mod-about\" class=\"shl-magic-editor-feild\">";
 			echo $pd->text($this->description);
 			echo "</div>";
-			
-			//echo "<p style=\"white-space: pre-line;\">".htmlspecialchars($this->description)."</p>";
 		}
 		
 		if ($this->download || $this->version || $this->creators) {
@@ -181,10 +181,10 @@ class ModPage {
 		if (!str_starts_with($this->download, "http")) {
 			$download_content = $this->download;
 		}
-		else if (!$stalker && (time() - $this->updated) < (60 * 60 * 24 * 180)) {
+		else if (!$stalker && (time() - $this->created) < (60 * 60 * 24 * 3)) {
 			$download_content = "<div class=\"thread-card\">
 			<p><b>You need an account to view this info.</b></p>
-			<p>Please log in or register to get links to this mod.</p>
+			<p>To prevent spam, mods created in the last 3 days cannot be downloaded by users without an account. Please create an account or come back soon!</p>
 			<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
 		</div>";
 		}
@@ -297,6 +297,11 @@ class ModPage {
 			"Planning" => "Planning"
 		]);
 		
+		edit_feild("visibility", "select", "Visibility", "Choose if this mod page will appear on the main mods list.", $this->visibility, true, [
+			"public" => "Public",
+			"unlisted" => "Unlisted",
+		]);
+		
 		echo "<h3>Edit info</h3>";
 		edit_feild("reason", "text", "Edit reason", "Optional description of why this mod was edited.", "");
 		
@@ -333,6 +338,7 @@ class ModPage {
 		//$this->security = htmlspecialchars($_POST["security"]);
 		$this->status = htmlspecialchars($_POST["status"]);
 		$this->reason = htmlspecialchars($_POST["reason"]);
+		$this->visibility = htmlspecialchars($_POST["visibility"]);
 		
 		if (!in_array($whom, $this->creators, true) && !$is_mod && !$this->exists()) {
 		    $this->creators = array($whom);
@@ -542,35 +548,40 @@ function delete_mod() : void {
 	}
 }
 
-function list_mods() : void {
+$gEndMan->add("mod-list", function (Page $page) {
 	$actor = user_get_current();
 	
 	$db = new RevisionDB("mod");
 	
 	$list = $db->enumerate();
 	
-	include_header();
-	echo "<h1>List of Mods</h1>";
+	//include_header();
+	$page->add( "<h1>List of Mods</h1>" );
 	
 	// Make mod modual
 	if (get_name_if_authed()) {
-		readfile("../../data/_mkmod.html");
+		$page->addFromFile('../../data/_mkmod.html');
 	}
 	
 	// Join message
 	if (!$actor) {
-		echo "<div class=\"thread-card\">
+		$page->add( "<div class=\"thread-card\">
 			<p><b>Want to add your mod here?</b></p>
 			<p>Log in or create an account to add your mod to the database.</p>
 			<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
-		</div>";
+		</div>" );
 	}
 	
 	// Grid of mods
-	echo "<div class=\"mod-listing\">";
+	$page->add( "<div class=\"mod-listing\">" );
 	
 	for ($i = 0; $i < sizeof($list); $i++) {
 		$mp = new ModPage($list[$i]);
+		
+		if ($mp->visibility !== "public") {
+			continue;
+		}
+		
 		$title = $mp->name ? $mp->name : $mp->package;
 		$desc = htmlspecialchars(substr($mp->description, 0, 100));
 		
@@ -578,10 +589,10 @@ function list_mods() : void {
 			$desc = $desc . "...";
 		}
 		
-		$url = "./?m=" . htmlspecialchars($mp->package);
+		$url = "./?m=" . urlencode($mp->package);
 		$img = $mp->image ? $mp->image : "./?a=generate-logo-coloured&seed=$title";
 		
-		echo "
+		$page->add("
 		<div class=\"mod-card-outer\">
 			<a href=\"$url\">
 			<div class=\"mod-card-image\" style=\"background-image: url('$img');\"></div>
@@ -590,13 +601,13 @@ function list_mods() : void {
 				<p>$desc</p>
 			</div>
 			</a>
-		</div>";
+		</div>");
 	}
 	
-	echo "</div>";
+	$page->add( "</div>" );
 	
-	include_footer();
-}
+	//include_footer();
+});
 
 $gEndMan->add("mod-rename", function(Page $page) {
 	$user = user_get_current();

@@ -251,6 +251,15 @@ class Page {
 		}
 	}
 	
+	function addFromFile(string $path) : void {
+		/**
+		 * String should be a literal otherwise you almost certianly have local
+		 * file inclusion security flaws.
+		 */
+		
+		$this->add(file_get_contents($path));
+	}
+	
 	private function render_html() : string {
 		assert($this->mode === PAGE_MODE_HTML);
 		

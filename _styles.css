@@ -152,28 +152,25 @@ textarea {
 
 input[type=submit], button, .button {
 	background: var(--colour-primary);
-	border: 1px solid transparent;
-	border-radius: 1em;/*1000em;*/
+/* 	border: 1px solid transparent; */
+	border: none;
+	border-radius: 0.325em;
 	color: var(--colour-primary-text);
 	cursor: pointer;
 	font-family: var(--font-main);
 	font-size: 14pt;
 	padding: 0.5em 1.25em;
 	outline: none;
-	box-shadow: 0 0.2em 0.2em #0004;
 	transition: background 0.1s, box-shadow 0.1s;
 }
 
 input[type=submit]:hover, button:hover, .button:hover {
 	background: var(--colour-primary-darker);
-	/*box-shadow: 0 !(Button.Glow.Offset) !(Button.Glow.Radius) var(--colour-primary-darker);*/
-	box-shadow: 0 0.4em 0.4em #0005;
 }
 
 .button.secondary {
 	background: var(--colour-background-light-c);
 	color: var(--colour-primary);
-	border: 1px solid var(--colour-primary-a);
 }
 
 .button.secondary:hover {
@@ -234,16 +231,16 @@ input[type=submit]:hover, button:hover, .button:hover {
 
 /* Navbar */
 .navbar-section {
-	background: var(--colour-background-dark-b);
+	background: var(--colour-background-dark);
 	border: none;
-	border-bottom: 1px solid var(--colour-background-light-b);
+/* 	border-bottom: 1px solid var(--colour-background-light-b); */
 	padding: 1em;
 	position: fixed;
 	top: 0;
 	width: calc(100vw - 32px);
 	z-index: 100;
 	border-radius: 0 0 !(NavBar.Radius) !(NavBar.Radius);
-	backdrop-filter: blur(5em);
+/* 	backdrop-filter: blur(5em); */
 	box-shadow: 0 0.2em 0.4em #0004;
 }
 
