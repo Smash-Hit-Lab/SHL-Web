@@ -152,7 +152,7 @@ class Article {
 		for ($i = (sizeof($history) - 1); $i >= 0; $i--) {
 			$rev = $history[$i];
 			
-			$html .= "<li><a href=\"./?n=$this->name&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./?u=$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
+			$html .= "<li><a href=\"./?n=$this->name&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./@$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
 		}
 		
 		$html .= "</ul>";
@@ -160,7 +160,20 @@ class Article {
 	}
 	
 	function render_update() {
-		return file_get_contents("../../data/_news_editor.html");
+		$content = file_get_contents("../../data/_news_editor.html");
+		
+		$content = str_replace("NAME", $this->name, $content);
+		$content = str_replace("TITLE", $this->title, $content);
+		$content = str_replace("OLDBODY", htmlspecialchars($this->body), $content);
+		
+		if ($this->permissions == "public") {
+			$content = str_replace("SELECTED_IF_PUBLIC", "selected", $content);
+		}
+		else {
+			$content = str_replace("SELECTED_IF_PRIVATE", "selected", $content);
+		}
+		
+		return $content;
 	}
 	
 	function render() {
@@ -205,8 +218,8 @@ class Article {
 		$base .= "<div style=\"border-bottom: 1px solid var(--colour-primary-b); margin-bottom: 1em;\"></div>";
 		
 		// Display comments
-		//$disc = new Discussion($this->comments);
-		//$disc->display("Comments", "./?n=" . $this->name);
+		$disc = new Discussion($this->comments);
+		$base .= $disc->render("Comments", "./?n=" . $this->name);
 		
 		return $base;
 	}

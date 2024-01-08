@@ -213,7 +213,7 @@ class ModPage {
 			
 			$creators_content .= "<div style=\"display: grid; grid-template-columns: 32px auto;\">
 	<div style=\"grid-column: 1; align-items: center;\"><img src=\"$pfp\" style=\"width: 32px; height: 32px; border-radius: 16px;\"/></div>
-	<div style=\"grid-column: 2; margin-left: 0.5em; align-items: center;\"><p>" . ($on_site ? "<a href=\"./?u=$user->name\">$user->display</a> (@$user->name)" : $user) . "</p></div>
+	<div style=\"grid-column: 2; margin-left: 0.5em; align-items: center;\"><p>" . ($on_site ? "<a href=\"./@$user->name\">$user->display</a> (@$user->name)" : $user) . "</p></div>
 </div>";
 		}
 		
@@ -253,7 +253,7 @@ class ModPage {
 		for ($i = (sizeof($history) - 1); $i >= 0; $i--) {
 			$rev = $history[$i];
 			
-			echo "<li><a href=\"./?m=$this->package&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./?u=$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
+			echo "<li><a href=\"./?m=$this->package&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./@$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
 		}
 		
 		echo "</ul>";

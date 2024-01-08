@@ -451,7 +451,7 @@ class User {
 			// Schema R1: Update discussions URL
 			if ($this->schema < 2) {
 				$disc = new Discussion($this->wall);
-				$disc->set_url("./?u=$this->name");
+				$disc->set_url("./@$this->name");
 				
 				$this->schema = 2;
 				$this->save();
@@ -1074,7 +1074,7 @@ function get_nice_display_name(string $user, bool $badge = true) {
 	 */
 	
 	if (!user_exists($user)) {
-		return "Deleted user";
+		return "deleted user";
 	}
 	
 	$user = new User($user);
@@ -1082,14 +1082,10 @@ function get_nice_display_name(string $user, bool $badge = true) {
 	$string = "";
 	
 	if ($user->name == $user->display) {
-		$string = "<a href=\"./?u=$user->name\">$user->name</a>";
+		$string = "<a href=\"./@$user->name\">$user->name</a> (@$user->name)";
 	}
 	else {
-		$string = "<a href=\"./?u=$user->name\">$user->display</a>";
-	}
-	
-	if ($badge) {
-		$string .= " " . get_user_badge($user);
+		$string = "<a href=\"./@$user->name\">$user->display</a> (@$user->name)";
 	}
 	
 	return $string;
@@ -1264,7 +1260,7 @@ function save_account() {
 	
 	$user->save();
 	
-	redirect("/?u=" . $user->name);
+	redirect("/@" . $user->name);
 }
 
 function display_user(string $user) {
@@ -1380,7 +1376,7 @@ function display_user(string $user) {
 	// Display comments
 	echo "<div class=\"user-tab-data wall\">";
 	$disc = new Discussion($user->wall);
-	$disc->display_reverse("Message wall", "./?u=" . $user->name);
+	$disc->display_reverse("Message wall", "./@" . $user->name);
 	echo "</div>";
 	
 	// Edit profile button
@@ -1475,9 +1471,9 @@ function user_verify() {
 			$user->verify($verifier);
 		}
 		
-		alert("User $user->name was marked verified", "./?u=$user->name");
+		alert("User $user->name was marked verified", "./@$user->name");
 		
-		redirect("./?u=$user->name");
+		redirect("./@$user->name");
 	}
 	else {
 		sorry("The action you have requested is not currently implemented.");
@@ -1548,7 +1544,7 @@ $gEvents->add("user.register.after", function(Page $page) {
 	
 	$wall = new Discussion($user->wall);
 	
-	$wall->add_comment("smashhitlab", "Welcome to the Smash Hit Lab!\n\nIf you ever have any issues, please let one of our staff know — they will have a badge that says \"moderator\" or \"manager\" next to their name.\n\nIf you find any bugs or glitches, please report them to [knot126](./?u=knot126).\n\nDon't be afraid to say hello, and we hope you enjoy your stay!");
+	$wall->add_comment("smashhitlab", "Welcome to the Smash Hit Lab!\n\nIf you ever have any issues, please let one of our staff know — they will have a badge that says \"moderator\" or \"manager\" next to their name.\n\nIf you find any bugs or glitches, please report them to [knot126](./@knot126).\n\nDon't be afraid to say hello, and we hope you enjoy your stay!");
 });
 
 $gEndMan->add("user-authorise-reset", function(Page $page) {
