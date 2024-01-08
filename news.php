@@ -44,15 +44,11 @@ function get_news_edit_button(string $name) : string {
 		$user = new User($user);
 		
 		if ($user->is_admin()) {
-			return "<p class=\"centred\"><a href=\"./?a=update_news&n=$name\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Edit article</button></a> <a href=\"./?a=news-history&n=$name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">history</span> History</button></a></p>";
+			return "<p class=\"centred\"><a href=\"./?a=news-update&n=$name\"><button class=\"btn btn-primary\">Edit article</button></a> <a href=\"./?a=news-history&n=$name\"><button class=\"btn btn-outline-secondary\">History</button></a></p>";
 		}
 	}
 	
 	return "";
-}
-
-function show_news_edit_button(string $name) : void {
-	echo get_news_edit_button($name);
 }
 
 class Article {
@@ -143,85 +139,28 @@ class Article {
 		//$this->save();
 	}
 	
-	function display_history() {
-		echo "<h1>History of " . ($this->title ? $this->title : $this->name) . "</h1>";
+	function render_history() {
+		$html = "";
+		
+		$html .= "<h1>History of " . ($this->title ? $this->title : $this->name) . "</h1>";
 		
 		$db = new RevisionDB("article");
 		$history = $db->history($this->name);
 		
-		echo "<ul>";
+		$html .= "<ul>";
 		
 		for ($i = (sizeof($history) - 1); $i >= 0; $i--) {
 			$rev = $history[$i];
 			
-			echo "<li><a href=\"./?n=$this->name&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./?u=$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
+			$html .= "<li><a href=\"./?n=$this->name&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./?u=$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
 		}
 		
-		echo "</ul>";
+		$html .= "</ul>";
+		return $html;
 	}
 	
-	function display_update() {
-		require("../../data/_news_editor.html");
-	}
-	
-	function display() {
-		/**
-		 * Echo out a news article.
-		 */
-		
-		$has_sidebar = ($this->name != "sidebar" && $this->name != "home");
-		
-		if ($has_sidebar) {
-			echo "<div class=\"article-page-body\">";
-			echo "<div class=\"article-page-body-main\">";
-		}
-		
-		echo "<h1>$this->title</h1>";
-		
-		// Make icons
-		$icon_date = "<span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">today</span>";
-		$icon_people = "<span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">supervisor_account</span>";
-		
-		// Make editor list
-		$editors = "";
-		
-		for ($i = 0; $i < sizeof($this->authors); $i++) {
-			$editors .= get_nice_display_name($this->authors[$i]);
-			
-			// Nice ands and commas
-			if (($i + 2) == sizeof($this->authors)) {
-				$editors .= " and ";
-			}
-			else if (($i + 1) != sizeof($this->authors)) {
-				$editors .= ", ";
-			}
-		}
-		
-		// Display article creation date
-		echo "<p style=\"text-align: center; opacity: 0.7;\">$icon_date Created " . date("Y-m-d", $this->created) . (($this->created != $this->updated) ? (" (edited " . date("Y-m-d", $this->updated) . ")") : ("")) . "<span style=\"padding-left: 1em\"/>$icon_people Edited by $editors</p>";
-		
-		// Edit button for article
-		show_news_edit_button($this->name);
-		
-		echo "<div class=\"article-body\">";
-		echo $this->get_html();
-		echo "</div>";
-		
-		// Divider for comments
-		echo "<div style=\"border-bottom: 1px solid var(--colour-primary-b); margin-bottom: 1em;\"></div>";
-		
-		// Display comments
-		$disc = new Discussion($this->comments);
-		$disc->display("Comments", "./?n=" . $this->name);
-		
-		// Has sidebar ?
-		if ($has_sidebar) {
-			echo "</div>";
-			echo "<div class=\"article-page-body-sidebar\">";
-			echo (new Article("sidebar"))->get_html();
-			echo "</div>";
-			echo "</div>";
-		}
+	function render_update() {
+		return file_get_contents("../../data/_news_editor.html");
 	}
 	
 	function render() {
@@ -230,12 +169,6 @@ class Article {
 		 */
 		
 		$base = "";
-		$has_sidebar = ($this->name != "sidebar" && $this->name != "home");
-		
-		if ($has_sidebar) {
-			$base .= "<div class=\"article-page-body\">";
-			$base .= "<div class=\"article-page-body-main\">";
-		}
 		
 		$base .= "<h1>$this->title</h1>";
 		
@@ -259,10 +192,10 @@ class Article {
 		}
 		
 		// Display article creation date
-		$base .= "<p style=\"text-align: center; opacity: 0.7;\">$icon_date Created " . date("Y-m-d", $this->created) . (($this->created != $this->updated) ? (" (edited " . date("Y-m-d", $this->updated) . ")") : ("")) . "<span style=\"padding-left: 1em\"/>$icon_people Edited by $editors</p>";
+		$base .= "<p style=\"opacity: 0.7;\">$icon_date Created " . date("Y-m-d", $this->created) . (($this->created != $this->updated) ? (" (edited " . date("Y-m-d", $this->updated) . ")") : ("")) . "<span style=\"padding-left: 1em\"/>$icon_people Edited by $editors</p>";
 		
 		// Edit button for article
-		//show_news_edit_button($this->name);
+		$base .= get_news_edit_button($this->name);
 		
 		$base .= "<div class=\"article-body\">";
 		$base .= $this->get_html();
@@ -274,15 +207,6 @@ class Article {
 		// Display comments
 		//$disc = new Discussion($this->comments);
 		//$disc->display("Comments", "./?n=" . $this->name);
-		
-		// Has sidebar ?
-		if ($has_sidebar) {
-			$base .= "</div>";
-			$base .= "<div class=\"article-page-body-sidebar\">";
-			$base .= (new Article("sidebar"))->get_html();
-			$base .= "</div>";
-			$base .= "</div>";
-		}
 		
 		return $base;
 	}
@@ -297,13 +221,15 @@ function article_exists(string $name) : bool {
 	return $db->has($name);
 }
 
-function display_news(string $name) : void {
+function display_news(Page $page, string $name) : void {
 	/**
 	 * Display the specified news article.
 	 */
 	
+	$page->force_bs();
+	
 	if (!article_exists($name)) {
-		sorry("It seems like we don't have a news article by that name.", get_news_edit_button($name));
+		$page->info("Not found", "It seems like we don't have a news article by that name." . get_news_edit_button($name));
 	}
 	
 	$index = -1;
@@ -317,26 +243,26 @@ function display_news(string $name) : void {
 	// HACK for article titles
 	global $gTitle; $gTitle = $article->title;
 	
-	include_header();
+	// include_header();
 	
 	if (($article->permissions == "public") || (get_name_if_admin_authed() != null)) {
-		$article->display();
+		$page->add($article->render());
 	}
 	else {
-		sorry("It seems like we don't have a news article by that name.", get_news_edit_button($name));
+		$page->info("Not found", "It seems like we don't have a news article by that name." . get_news_edit_button($name));
 	}
 	
-	include_footer();
+	$page->send();
+	
+	// include_footer();
 }
 
 $gEndMan->add("news-history", function (Page $page) {
+	$page->force_bs();
+	
 	if (get_name_if_admin_authed()) {
-		$page->set_mode(PAGE_MODE_RAW);
-		
-		include_header();
 		$article = new Article($_GET["n"]);
-		$article->display_history();
-		include_footer();
+		$page->add($article->render_history());
 	}
 	else {
 		$page->info("Sorry", "You cannot preform this action.");
@@ -360,43 +286,29 @@ $gEndMan->add("news-view", function (Page $page) {
 	}
 });
 
-function pretend_error() : void {
-	include_header();
-	echo "<h1>Sorry</h1><p>The action you have requested is not currently implemented.</p>";
-	include_footer();
-}
-
-function update_news() : void {
+$gEndMan->add("news-update", function(Page $page) {
 	$user = get_name_if_admin_authed();
 	
-	if (!$user || !array_key_exists("n", $_GET)) {
-		pretend_error();
-		return;
+	$page->force_bs();
+	
+	if ($user) {
+		if (!$page->has("submit")) {
+			$article = new Article($page->get("n"));
+			$page->add($article->render_update());
+		}
+		else {
+			// We are allowed to update the article ...
+			$article = new Article($page->get("n"));
+			$article->update($page->get("title"), $page->get("body", true, null, SANITISE_NONE), $user);
+			$article->set_permissions($page->get("permissions"));
+			$article->save();
+			
+			alert("Article \"$article->title\" ($article->name) has been updated by @$user", "./?n=$article->name");
+			
+			redirect("./?n=$article->name");
+		}
 	}
-	
-	// We are allowed to update the article ...
-	$article = new Article($_GET["n"]);
-	
-	include_header();
-	$article->display_update();
-	include_footer();
-}
-
-function save_news() : void {
-	$user = get_name_if_admin_authed();
-	
-	if (!$user || !array_key_exists("n", $_GET)) {
-		pretend_error();
-		return;
+	else {
+		$page->info("Not logged in", "You need to log in to save news articles.");
 	}
-	
-	// We are allowed to update the article ...
-	$article = new Article($_GET["n"]);
-	$article->update($_POST["title"], $_POST["body"], $user);
-	$article->set_permissions($_POST["permissions"]);
-	$article->save();
-	
-	alert("Article \"$article->title\" ($article->name) has been updated by @$user", "./?n=$article->name");
-	
-	redirect("./?n=$article->name");
-}
+});

@@ -81,12 +81,13 @@ class ServiceMod {
 $gEndMan->add("services-home", function (Page $page) {
 	$user = user_get_current();
 	
+	$page->force_bs();
+	
 	if ($user) {
 		$page->heading(1, "Mod Services");
-		//$page->add("<div class=\"comment-card\"><p>Mod Services are in a prerelease state and currently only support adverts.</p></div>");
-		$page->add("<p style=\"text-align: center;\">");
 		$page->link_button("add", "Create instance", "./?a=services-create", true);
 		
+		$page->add("<p style=\"text-align: center;\">");
 		$page->add("<ul>");
 		for ($i = 0; $i < sizeof($user->mods); $i++) {
 			$id = $user->mods[$i];
@@ -94,7 +95,6 @@ $gEndMan->add("services-home", function (Page $page) {
 			$page->add("<li><a href=\"./?a=services-info&id=$id\">$sv->title</a> (id = $id)</li>");
 		}
 		$page->add("</ul>");
-		
 		$page->add("</p>");
 	}
 	else {
@@ -104,6 +104,8 @@ $gEndMan->add("services-home", function (Page $page) {
 
 $gEndMan->add("services-create", function (Page $page) {
 	$user = user_get_current();
+	
+	$page->force_bs();
 	
 	if ($user && $user->is_verified()) {
 		if (!$page->has("submit")) {
@@ -140,6 +142,8 @@ $gEndMan->add("services-create", function (Page $page) {
 $gEndMan->add("services-info", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
+	
+	$page->force_bs();
 	
 	if ($user && (($user->has_mod($id) && $user->is_verified()) || $user->is_admin())) {
 		$really_owns_mod = $user->has_mod($id);
@@ -193,6 +197,8 @@ $gEndMan->add("services-update", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
 	
+	$page->force_bs();
+	
 	if ($user && $user->has_mod($id) && $user->is_verified()) {
 		if (!$page->has("submit")) {
 			$sv = new ServiceMod($id);
@@ -228,6 +234,8 @@ $gEndMan->add("services-update", function (Page $page) {
 $gEndMan->add("services-delete", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
+	
+	$page->force_bs();
 	
 	if ($user && (($user->has_mod($id) && $user->is_verified()) || $user->is_admin())) {
 		if (!$page->has("submit")) {
@@ -265,6 +273,8 @@ $gEndMan->add("services-adverts", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
 	
+	$page->force_bs();
+	
 	if ($user && $user->has_mod($id) && $user->is_verified()) {
 		if (!$page->has("submit")) {
 			$page->heading(1, "Update advertisements");
@@ -296,6 +306,8 @@ $gEndMan->add("services-adverts-preview", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
 	
+	$page->force_bs();
+	
 	if ($user && (($user->has_mod($id) && $user->is_verified()) || $user->is_admin())) {
 		$sv = new ServiceMod($id);
 		
@@ -311,6 +323,8 @@ $gEndMan->add("services-adverts-preview", function (Page $page) {
 $gEndMan->add("services-patch", function (Page $page) {
 	$user = user_get_current();
 	$id = $page->get("id");
+	
+	$page->force_bs();
 	
 	if ($user && $user->has_mod($id) && $user->is_verified()) {
 		$page->heading(1, "Patching libsmashhit binary");

@@ -369,10 +369,12 @@ class Discussion {
 		return $comments;
 	}
 	
-	function display_edit(int $index, string $url = "") {
+	function render_edit(int $index, string $url = "") {
 		/**
 		 * Display the comment edit box.
 		 */
+		
+		$base = "";
 		
 		$enabled = get_config("enable_discussions", "enabled");
 		
@@ -383,10 +385,10 @@ class Discussion {
 		switch ($enabled) {
 			case "enabled": {
 				if (!get_name_if_authed()) {
-					echo "<div class=\"comment-card comment-edit\">";
-					echo "<p style=\"text-align: center\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px; font-size: 128px;\">forum</span></p>";
-					echo "<p style=\"text-align: center\">Want to leave a comment? <a href=\"./?a=login\">Log in</a> or <a href=\"./?a=register\">create an account</a> to share your thoughts!</p>";
-					echo "</div>";
+					$base .= "<div class=\"comment-card comment-edit\">";
+					$base .= "<p style=\"text-align: center\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px; font-size: 128px;\">forum</span></p>";
+					$base .= "<p style=\"text-align: center\">Want to leave a comment? <a href=\"./?a=login\">Log in</a> or <a href=\"./?a=register\">create an account</a> to share your thoughts!</p>";
+					$base .= "</div>";
 					return;
 				}
 				
@@ -406,16 +408,16 @@ class Discussion {
 					$img = "./icon.png";
 				}
 				
-				echo "<div id=\"discussion-$this->id-box\" class=\"comment-card comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p>$name</p><p><textarea id=\"discussions-$this->id-entry\" style=\"width: calc(100% - 1em); background: transparent; padding: 0; resize: none; display: inline-block;\" name=\"body\" placeholder=\"What would you like to say?\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
-				echo "<button class=\"button\" onclick=\"ds_update();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">send</span> Post comment</button>";
-				echo "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p>";
+				$base .= "<div id=\"discussion-$this->id-box\" class=\"comment-card comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p>$name</p><p><textarea id=\"discussions-$this->id-entry\" style=\"width: calc(100% - 1em); background: transparent; padding: 0; resize: none; display: inline-block;\" name=\"body\" placeholder=\"What would you like to say?\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
+				$base .= "<button class=\"button\" onclick=\"ds_update();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">send</span> Post comment</button>";
+				$base .= "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p>";
 				break;
 			}
 			case "closed": {
-				echo "<div class=\"comment-card comment-edit\">";
-				echo "<p style=\"text-align: center\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px; font-size: 128px;\">nights_stay</span></p>";
-				echo "<p style=\"text-align: center\">This discussion has been closed. You can still chat on our Discord server!</p>";
-				echo "</div>";
+				$base .= "<div class=\"comment-card comment-edit\">";
+				$base .= "<p style=\"text-align: center\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px; font-size: 128px;\">nights_stay</span></p>";
+				$base .= "<p style=\"text-align: center\">This discussion has been closed. You can still chat on our Discord server!</p>";
+				$base .= "</div>";
 				break;
 			}
 			// If they are fully disabled there should be a message about it.
@@ -423,21 +425,27 @@ class Discussion {
 				break;
 			}
 		}
+		
+		return $base;
 	}
 	
-	function display_title(string $title) {
-		echo "<h3 class=\"left-align\" style=\"margin-top: 0; position: relative; top: -10px;\">$title (" . $this->enumerate_shown() . ")</h3>";
+	function render_title(string $title) {
+		return "<h3 class=\"left-align\" style=\"margin-top: 0; position: relative; top: -10px;\">$title (" . $this->enumerate_shown() . ")</h3>";
 	}
 	
-	function display_reload() {
-		echo "<button class=\"button secondary\" onclick=\"ds_clear(); ds_load();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">refresh</span> Reload</button>";
+	function render_reload() {
+		$base = "";
+		
+		$base .= "<button class=\"button secondary\" onclick=\"ds_clear(); ds_load();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">refresh</span> Reload</button>";
 		
 		if (get_name_if_mod_authed()) {
-			echo " <button class=\"button secondary\" onclick=\"ds_toggle_hidden();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">visibility_off</span> Hidden</button>";
+			$base .= " <button class=\"button secondary\" onclick=\"ds_toggle_hidden();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">visibility_off</span> Hidden</button>";
 		}
+		
+		return $base;
 	}
 	
-	function display_follow() {
+	function render_follow() {
 		$name = get_name_if_authed();
 		
 		if ($name) {
@@ -447,11 +455,13 @@ class Discussion {
 			$secondary = ($following) ? " secondary" : "";
 			$url = $_SERVER['REQUEST_URI'];
 			
-			echo "<a href=\"./?a=discussion_follow&id=$this->id&after=$url\"><button class=\"button$secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">notification_add</span> $follow</button></a>";
+			return "<a href=\"./?a=discussion_follow&id=$this->id&after=$url\"><button class=\"button$secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">notification_add</span> $follow</button></a>";
 		}
+		
+		return "";
 	}
 	
-	function display_lock() {
+	function render_lock() {
 		$name = get_name_if_mod_authed();
 		
 		if ($name) {
@@ -460,60 +470,90 @@ class Discussion {
 			$text = ($locked) ? "Unlock" : "Lock";
 			$url = $_SERVER['REQUEST_URI'];
 			
-			echo "<a href=\"./?a=discussion_lock&id=$this->id&after=$url\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">lock</span> $text</button></a>";
+			return "<a href=\"./?a=discussion_lock&id=$this->id&after=$url\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">lock</span> $text</button></a>";
 		}
+		
+		return "";
 	}
 	
-	function display_bar(string $title) {
-		echo "<div class=\"comments-header\">";
-			echo "<div class=\"comments-header-label\">";
-				$this->display_title($title);
-			echo "</div>";
-			echo "<div class=\"comments-header-data right-align\"><p>";
-				$this->display_reload();
-				echo " ";
-				$this->display_lock();
-				echo " ";
-				$this->display_follow();
-			echo "</p></div>";
-		echo "</div>";
+	function render_bar(string $title) : string {
+		$base = "";
+		
+		$base .= "<div class=\"comments-header\">";
+			$base .= "<div class=\"comments-header-label\">";
+				$base .= $this->render_title($title);
+			$base .= "</div>";
+			$base .= "<div class=\"comments-header-data right-align\"><p>";
+				$base .= $this->render_reload();
+				$base .= " ";
+				$base .= $this->render_lock();
+				$base .= " ";
+				$base .= $this->render_follow();
+			$base .= "</p></div>";
+		$base .= "</div>";
+		
+		return $base;
 	}
 	
-	function display_comments(bool $reverse = false) {
-		echo "<div id=\"discussion-$this->id\"></div>";
-		echo "<script>ds_clear(); ds_load();</script>";
+	function render_comments(bool $reverse = false) {
+		return "<div id=\"discussion-$this->id\"></div><script>ds_clear(); ds_load();</script>";
 	}
 	
-	function display_disabled() : bool {
-		$disabled = (get_config("enable_discussions", "enabled") === "disabled");
+	function is_disabled() : bool {
+		return (get_config("enable_discussions", "enabled") === "disabled");
+	}
+	
+	function render_disabled() : bool {
+		$disabled = $this->is_disabled();
 		
 		if ($disabled) {
-			echo "<div class=\"comment-card comment-edit\"><p>Discussions have been disabled sitewide. Existing comments are not shown, but will return when discussions are enabled again.</p></div>";
+			return "<div class=\"comment-card comment-edit\"><p>Discussions have been disabled sitewide. Existing comments are not shown, but will return when discussions are enabled again.</p></div>";
 		}
 		
-		return $disabled;
+		return "";
 	}
 	
 	function comments_load_script(bool $backwards = false) {
 		$sak = user_get_sak();
-		echo "<script>var DiscussionID = \"$this->id\"; var UserSAK = \"$sak\"; var DiscussionBackwards = " . ($backwards ? "true" : "false") . "; var ShowHidden = false;</script>";
-		readfile("../../data/_discussionload.html");
+		return "<script>var DiscussionID = \"$this->id\"; var UserSAK = \"$sak\"; var DiscussionBackwards = " . ($backwards ? "true" : "false") . "; var ShowHidden = false;</script>" . file_get_contents("../../data/_discussionload.html");
 	}
 	
-	function display(string $title = "Discussion", string $url = "") {
-		$this->comments_load_script();
-		$this->display_bar($title);
-		if ($this->display_disabled()) { return; }
-		$this->display_comments();
-		$this->display_edit(-1, $url);
+	function render(string $title = "Discussion", string $url = "") : string {
+		$base = "";
+		
+		$base .= $this->comments_load_script();
+		$base .= $this->render_bar($title);
+		if ($this->is_disabled()) {
+			$base .= $this->render_disabled();
+			return $base;
+		}
+		$base .= $this->render_comments();
+		$base .= $this->render_edit(-1, $url);
+		
+		return $base;
 	}
 	
-	function display_reverse(string $title = "Discussion", string $url = "") {
-		$this->comments_load_script(true);
-		$this->display_bar($title);
-		if ($this->display_disabled()) { return; }
-		$this->display_edit(-1, $url);
-		$this->display_comments(true);
+	function render_reverse(string $title = "Discussion", string $url = "") : string {
+		$base = "";
+		
+		$base .= $this->comments_load_script(true);
+		$base .= $this->render_bar($title);
+		if ($this->is_disabled()) {
+			$base .= $this->render_disabled();
+			return $base;
+		}
+		$base .= $this->render_edit(-1, $url);
+		$base .= $this->render_comments(true);
+		
+		return $base;
+	}
+	
+	function display(string $title = "Discussion", string $url = "") : void {
+		echo $this->render($title, $url);
+	}
+	
+	function display_reverse(string $title = "Discussion", string $url = "") : void {
+		echo $this->render_reverse($title, $url);
 	}
 }
 
@@ -698,6 +738,9 @@ function discussion_poll() {
 		sorry("Problem doing that.");
 	}
 	
+	// Send mimetype
+	header('Content-type: application/json');
+	
 	$user = get_name_if_authed();
 	
 	// List the comments
@@ -712,9 +755,6 @@ function discussion_poll() {
 	$result->comments = $comments;
 	$result->actor = $user;
 	$result->next_sak = user_get_sak();
-	
-	// Send mimetype
-	header('Content-type: application/json');
 	
 	// Send json data
 	echo json_encode($result);

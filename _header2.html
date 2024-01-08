@@ -7,6 +7,87 @@
 		<link rel="shortcut icon" type="image/png" href="./favicon.png"/>
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+		<style>
+		.mod-edit-property {
+			display: grid;
+			grid-template-columns: 35% auto;
+			margin-bottom: 2em;
+		}
+		
+		.mod-edit-property-label {
+			grid-column: 1;
+		}
+		
+		.mod-edit-property-data {
+			grid-column: 2;
+			margin-left: 1em;
+		}
+		
+		/***/
+		.mod-listing {
+			display: grid;
+			grid: auto-flow / repeat(auto-fill, calc(12em + 1.5em));
+			justify-content: space-evenly;
+		}
+
+		.mod-listing a {
+			font-weight: normal;
+		}
+
+		.mod-listing a:hover {
+			text-shadow: none;
+		}
+
+		.mod-banner h1 {
+			color: #fff;
+			text-shadow: 0 0.2em 0.5em #0008;
+		}
+
+		.mod-card-outer {
+			width: 12em;
+			height: 16em;
+			padding: 0.75em;
+			display: inline-block;
+			overflow: hidden;
+			border: 1px solid transparent;
+		}
+
+		.mod-card-image {
+			width: 12em;
+			height: 8em;
+			background-position: center;
+			background-size: cover;
+			border-radius: 0.5em;
+		}
+
+		.mod-card-data {
+			text-align: left;
+			height: 8em;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		
+		/***/
+		.comment-card-inner {
+			display: grid;
+			grid-template-columns: 56px auto;
+		}
+
+		.comment-card-inner-left {
+			grid-column: 1;
+		}
+
+		.comment-card-inner-left img {
+			width: 56px;
+			height: 56px;
+			border-radius: 28px;
+		}
+
+		.comment-card-inner-right {
+			grid-column: 2;
+			margin-left: 1em;
+		}
+		</style>
 		<script src="./?a=site-js"></script>
 		<?php
 		global $gTitle;
@@ -20,69 +101,69 @@
 		?>
 	</head>
 	<body id="body" style="margin: 0; border: 0;">
-	    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-          <div class="container-fluid">
-            <a class="navbar-brand" href="./?n=home"><img src="./favicon.png" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">Smash Hit Lab</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                  <a class="nav-link" href="./?n=home">News</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="./?a=mod-list">Mods</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="./?a=forum-home">Forum</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="./?a=services-home">Services</a>
-                </li>
-                <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    More
-                  </a>
-                  <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="https://smashhit.wikitide.org/">Wiki</a></li>
-                    <li><a class="dropdown-item" href="https://youtube.com/@SmashHitLab">YouTube</a></li>
-                    <li><a class="dropdown-item" href="https://discord.gg/7kra7Z3UNn">Discord</a></li>
-                  </ul>
-                </li>
-              </ul>
-              <!--
-              <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-              </form>
-              -->
-              <?php
-              $u = user_get_current();
-              if ($u) {
-                echo '<li class="d-flex nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="' . $u->display . ' (@' . $u->name . ')">
-                    <img class="rounded-circle" src="' . $u->image . '" alt="Profile image of ' . $u->display . '" width="32" height="32"/>
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="./?u=' . $u->name . '">Profile</a></li>
-                    <li><a class="dropdown-item" href="./?a=edit_account">Edit Account</a></li>
-                    <li><a class="dropdown-item" href="./?a=notifications">Notifications</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="./?a=logout">Log out</a></li>
-                  </ul>
-                </li>';
-              }
-              else {
-                echo '
-                <form class="justify-content-start">
-                    <a href="./?a=auth-register"><button class="btn btn-outline-secondary" type="button">Create an account</button></a>
-                    <a href="./?a=auth-login"><button class="btn btn-outline-success me-2" type="button">Log in</button></a>
-                </form>';
-              }
-              ?>
-            </div>
-          </div>
-        </nav>
+			<nav class="navbar navbar-expand-lg bg-body-tertiary">
+					<div class="container-fluid">
+						<a class="navbar-brand" href="./?n=home"><img src="./favicon.png" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">Smash Hit Lab</a>
+						<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+							<span class="navbar-toggler-icon"></span>
+						</button>
+						<div class="collapse navbar-collapse" id="navbarSupportedContent">
+							<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+								<li class="nav-item">
+									<a class="nav-link" href="./?n=home">News</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link" href="./?a=mod-list">Mods</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link" href="./?a=forum-home">Forum</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link" href="./?a=services-home">Services</a>
+								</li>
+								<li class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										More
+									</a>
+									<ul class="dropdown-menu">
+										<li><a class="dropdown-item" href="https://smashhit.wikitide.org/">Wiki</a></li>
+										<li><a class="dropdown-item" href="https://youtube.com/@SmashHitLab">YouTube</a></li>
+										<li><a class="dropdown-item" href="https://discord.gg/7kra7Z3UNn">Discord</a></li>
+									</ul>
+								</li>
+							</ul>
+							<!--
+							<form class="d-flex" role="search">
+								<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+								<button class="btn btn-outline-success" type="submit">Search</button>
+							</form>
+							-->
+							<?php
+							$u = user_get_current();
+							if ($u) {
+								echo '<li class="d-flex nav-item dropdown">
+									<a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="' . $u->display . ' (@' . $u->name . ')">
+										<img class="rounded-circle" src="' . $u->image . '" alt="Profile image of ' . $u->display . '" width="32" height="32"/>
+									</a>
+									<ul class="dropdown-menu dropdown-menu-end">
+										<li><a class="dropdown-item" href="./?u=' . $u->name . '">Profile</a></li>
+										<li><a class="dropdown-item" href="./?a=edit_account">Edit Account</a></li>
+										<li><a class="dropdown-item" href="./?a=notifications">Notifications</a></li>
+										<li><hr class="dropdown-divider"></li>
+										<li><a class="dropdown-item" href="./?a=logout">Log out</a></li>
+									</ul>
+								</li>';
+							}
+							else {
+								echo '
+								<form class="justify-content-start">
+										<a href="./?a=auth-register"><button class="btn btn-outline-secondary" type="button">Create an account</button></a>
+										<a href="./?a=auth-login"><button class="btn btn-outline-success me-2" type="button">Log in</button></a>
+								</form>';
+							}
+							?>
+						</div>
+					</div>
+				</nav>
 		<div class="container-md" style="margin-top: 15px">
-		    
+				

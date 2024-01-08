@@ -45,9 +45,6 @@ function handle_action(string $action, Page $page) {
 		case "edit_account": edit_account(); break;
 		case "save_account": save_account(); break;
 		case "account_delete": account_delete(); break;
-	// ---- NEWS STUFF ---- //
-		case "update_news": update_news(); break;
-		case "save_news": save_news(); break;
 	// ---- DISCUSSIONS ---- //
 		case "discussion_update": discussion_update(); break;
 		case "discussion_hide": discussion_hide(); break;
@@ -90,33 +87,32 @@ function main() {
 	
 	$page = new Page();
 	
-	if (0) {
-	    http_response_code(203);
-	    
-	    $page->heading(1, "Sorry");
-	    $page->para("The Smash Hit Lab has closed temporarially as of 31 July 2023. It will reopen when it is transferred to someone who can take care of it better.");
-	    
-	    $page->send();
-	}
-	
 	// Mastodon are fucks
 	// See https://jort.link/
 	$agent = $_SERVER['HTTP_USER_AGENT'];
 	
-	
 	if (str_contains(strtolower($agent), "mastodon") || !$agent) {
-		http_response_code(203);
+		http_response_code(410);
 		echo "<html><head><title>Go away</title></head><body>Go away</body></html>";
 		die();
 	}
 	
+	// Enforce logins to access the site if that's wanted
 	if (get_config("require_logins_everywhere", false) && ((array_key_exists("a", $_GET)) ? (!str_starts_with($_GET["a"], "auth-")) : (true)) && !user_get_current()) {
 		header("Location: /?a=auth-login&redirect=" . urlencode($_SERVER['REQUEST_URI']));
 		die();
 	}
 	
+	// THE REAL STUFF!!!
+	
+	// Fixes up "x" var stuff
+	
+	
 	if (array_key_exists("a", $_GET)) {
 		handle_action($_GET["a"], $page);
+	}
+	else if (array_key_exists("action", $_GET)) {
+		handle_action($_GET["action"], $page);
 	}
 	else if (array_key_exists("m", $_GET)) {
 		display_mod();
@@ -125,16 +121,16 @@ function main() {
 		display_user($_GET["u"]);
 	}
 	else if (array_key_exists("n", $_GET)) {
-		display_news($_GET["n"]);
+		display_news($page, $_GET["n"]);
 	}
 	// DEPRECATED: Static pages are deprecated, should use news articles now!
 	// Update: They now redirect to news articles.
 	else if (array_key_exists("p", $_GET)) {
-		display_news($_GET["p"]);
+		header("Location: ./!" . $_GET["p"]);
 	}
 	else {
 		// Redirect to home page
-		header("Location: ./?n=home");
+		header("Location: ./!home");
 		die();
 	}
 }

@@ -100,18 +100,20 @@ function shl_hide_dialogue(name) {
 }
 
 function shl_button_fixup() {
-    let all = document.getElementsByTagName("button");
-    
-    for (let e of all) {
-        e.classList.add("btn");
-        e.classList.add("btn-outline-secondary");
-    }
-    
-    all = document.getElementsByClassName("material-icons");
-    
-    for (let e of all) {
-        e.remove();
-    }
+	let all = document.getElementsByTagName("button");
+	
+	for (let e of all) {
+		if (!e.classList.contains("btn")) {
+			e.classList.add("btn");
+			e.classList.add("btn-outline-secondary");
+		}
+	}
+	
+// 	all = document.getElementsByClassName("material-icons");
+// 	
+// 	for (let e of all) {
+// 		e.remove();
+// 	}
 }
 
 function shl_main() {

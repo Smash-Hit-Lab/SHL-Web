@@ -65,9 +65,9 @@ class Page {
 	
 	function info($title = "Done", $desc = "The action completed successfully.") : void {
 		if ($this->mode != PAGE_MODE_API) {
-			include_header();
+			include_header(true);
 			echo "<h1>$title</h1><p>$desc</p>";
-			include_footer();
+			include_footer(true);
 		}
 		else {
 			$this->set("status", $title);
@@ -227,7 +227,7 @@ class Page {
 	}
 	
 	function link_button(string $icon, string $title, string $url, bool $primary = false) : void {
-		$this->add("<a href=\"$url\"><button class=\"button" . ($primary ? "" : " secondary") . "\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">$icon</span> $title</button></a>");
+		$this->add("<a href=\"$url\"><button class=\"btn " . ($primary ? "btn-primary" : "btn-outline-secondary") . "\">$title</button></a>");
 	}
 	
 	function global_header() : void {

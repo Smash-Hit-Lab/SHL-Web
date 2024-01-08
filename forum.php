@@ -54,14 +54,14 @@ class ForumThread {
 $gEndMan->add("forum-home", function (Page $page) {
 	$actor = user_get_current();
 	
-	//$page->force_bs();
+	$page->force_bs();
 	$page->heading(1, "Forum");
 	
 	if ($actor) {
 		$page->add("<p style=\"text-align: center;\"><button onclick=\"shl_show_dialogue('new-thread')\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Create thread</button></p>");
 		
-		$page->add(create_form_dialogue_code('new-thread', "./?a=forum-create&submit=1", "Create a new thread", "<p><input type=\"text\" style=\"width: calc(100% - 1em); background: none; border: none;\" name=\"title\" placeholder=\"Title\"/></p>
-		<p><textarea name=\"content\" style=\"width: calc(100% - 1em); background: none; border: none;\" placeholder=\"Type your message (supports markdown)...\"></textarea></p>", "<button>Create thread</button>", '25em'));
+		$page->add(create_form_dialogue_code('new-thread', "./?a=forum-create&submit=1", "Create a new thread", "<p><input class=\"form-control\" type=\"text\" name=\"title\" placeholder=\"Title\"/></p>
+		<p><textarea class=\"form-control\" style=\"height: 200px; font-family: monospace;\" name=\"content\" placeholder=\"Type your message (supports markdown)...\"></textarea></p>", "<button>Create thread</button>", '25em'));
 	}
 	
 	$recent = get_config("forum_recent", []);
@@ -72,7 +72,7 @@ $gEndMan->add("forum-home", function (Page $page) {
 		if ($thread->exists()) {
 			$user = new User($thread->author);
 			
-			$page->add("<div class=\"card thread-card\"><div class=\"card-body\">
+			$page->add("<div class=\"card thread-card\" style=\"margin-bottom: 15px;\"><div class=\"card-body\">
 	<div style=\"display: grid; grid-template-columns: 80px auto;\">
 		<div style=\"grid-column: 1;\">
 			<img src=\"$user->image\" style=\"width: 80px; height: 80px; border-radius: 40px;\"/>
@@ -89,6 +89,8 @@ $gEndMan->add("forum-home", function (Page $page) {
 
 $gEndMan->add("forum-create", function (Page $page) {
 	$actor = user_get_current();
+	
+	$page->force_bs();
 	
 	if ($actor) {
 		if (!$page->has("submit")) {
@@ -129,10 +131,7 @@ $gEndMan->add("forum-create", function (Page $page) {
 });
 
 $gEndMan->add("forum-view", function (Page $page) {
-	// we need to use legacy include_footer/include_header for discussions does
-	// not support $page->add atm.
-	include_header();
-	
+	$page->force_bs();
 	$actor = user_get_current();
 	
 	// Get ID
@@ -141,24 +140,20 @@ $gEndMan->add("forum-view", function (Page $page) {
 	$thread = new ForumThread($id);
 	
 	if (!$thread->exists()) {
-		echo "<h1>This thread isn't real</h1><p>Sorry but this thread does not exist.</p>";
-		include_footer();
-		return;
+		$page->info("No such thread", "The thread you wanted does not seem to exist. Maybe it's been deleted?");
 	}
 	
 	// Display title
-	echo "<h1>$thread->title</h1>";
+	$page->add("<h1>$thread->title</h1>");
 	
 	// Moderation actions
 	if ($actor && $actor->is_mod()) {
-	    echo "<p style=\"text-align: center;\"><a href=\"./?a=forum-rename&thread=$thread->id\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Rename</button></a> <a href=\"./?a=forum-delete&thread=$thread->id\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">delete</span> Delete</button></a></p>";
+	    $page->add("<p><a href=\"./?a=forum-rename&thread=$thread->id\"><button class=\"button secondary\">Rename</button></a> <a href=\"./?a=forum-delete&thread=$thread->id\"><button class=\"button secondary\">Delete</button></a></p>");
 	}
 	
 	// Display the full discussion
 	$disc = new Discussion($id);
-	$disc->display();
-	
-	include_footer();
+	$page->add($disc->render());
 });
 
 $gEndMan->add("forum-delete", function (Page $page) {
