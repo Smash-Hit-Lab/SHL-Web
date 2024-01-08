@@ -58,7 +58,7 @@ $gEndMan->add("forum-home", function (Page $page) {
 	$page->heading(1, "Forum");
 	
 	if ($actor) {
-		$page->add("<p style=\"text-align: center;\"><button onclick=\"shl_show_dialogue('new-thread')\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Create thread</button></p>");
+		$page->add("<p><button class=\"btn btn-primary\" onclick=\"shl_show_dialogue('new-thread')\">Create thread</button></p>");
 		
 		$page->add(create_form_dialogue_code('new-thread', "./?a=forum-create&submit=1", "Create a new thread", "<p><input class=\"form-control\" type=\"text\" name=\"title\" placeholder=\"Title\"/></p>
 		<p><textarea class=\"form-control\" style=\"height: 200px; font-family: monospace;\" name=\"content\" placeholder=\"Type your message (supports markdown)...\"></textarea></p>", "<button>Create thread</button>", '25em'));

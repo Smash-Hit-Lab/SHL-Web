@@ -191,6 +191,8 @@ function notify_scan(string $text, string $where) : void {
 }
 
 $gEndMan->add("notifications", function(Page $page) {
+	$page->force_bs();
+	
 	$user = get_name_if_authed();
 	
 	if (!$user) {
