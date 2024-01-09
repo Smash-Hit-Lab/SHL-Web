@@ -1129,138 +1129,176 @@ function get_profile_image(string $user) {
 	return $user->image;
 }
 
-function edit_account() {
-	/**
-	 * Display the account data editing page.
-	 */
+$gEndMan->add("account-edit", function (Page $page) {
+	global $gTitle; $gTitle = "Edit your account";
 	
-	$user = get_name_if_authed();
+	$user = user_get_current();
 	
-	global $gTitle; $gTitle = "Editing account info";
-	include_header();
+	$page->force_bs();
 	
-	if (!$user) {
-		echo "<h1>This is strange</h1><p>Please log in to edit your user preferences.</p>";
-		include_footer();
-		return;
+	if ($user) {
+		if ($user->edit_locked) {
+			$page->info("Editing has been locked", "Your account has been locked from editing account information. This was probably due to a violation of our content policy.");
+		}
+		
+		if (!$page->has("submit")) {
+			$page->heading(1, "Edit account info");
+			
+			$form = new Form("./?a=account-edit&submit=1");
+			
+			$form->textbox("display", "Display name", "This is the name that will be displayed instead of your handle. It can be any name you prefer to be called.", $user->display);
+			$form->textbox("pronouns", "Pronouns", "These are your perferred pronouns; for example, he/him, she/her or they/them. They will be displayed by your name in some contexts.", $user->pronouns);
+			$form->textaera("about", "About", "You can write a piece of text detailing whatever you like on your userpage. Please don't include personal information!", $user->about);
+			
+			$available_types = [
+				"gravatar" => "Gravatar",
+				"youtube" => "YouTube",
+				"generated" => "Lab Logo",
+			];
+			
+			$form->select("image_type", "Profile image source", "Please chose what service your profile image should be derived from.", $available_types, $user->image_type);
+			$form->textbox("youtube", "YouTube", "The handle for your YouTube account, if you have one.", $user->youtube);
+			$form->textbox("email", "Email", "The email address that you prefer to be contacted about for account related issues.", $user->email, !$user->is_admin());
+			$form->textbox("colour", "Page colour", "The base colour that the colour of your userpage is derived from. Represented as hex #RRGGBB.", $user->manual_colour);
+			
+			$form->submit("Save account info");
+			
+			$page->add($form);
+			
+			$page->heading(2, "Download your data");
+			$page->add("<i>Please let a staff member know that you would like data. We should respond within a few days.</i>");
+			
+			$page->heading(2, "Delete your account");
+			$page->add("<p>If you would like to delete your account and associated data, you can start by clicking the button. <b>This action cannot be undone!</b></p><p><a href=\"./?a=account_delete\"><button class=\"btn btn-danger\">Delete account</button></a></p>");
+		}
+		else {
+			$user = user_get_current();
+			
+			$user->display = $page->get("display");
+			$user->pronouns = $page->get("pronouns");
+			
+			if (($user->display != $user->name) && user_exists($user->display)) {
+				$page->info("Whoops!", "You cannot set your display name to that of another user's handle.");
+			}
+			
+			$new_mail = $page->get("email");
+			
+			if (!$user->is_admin()) {
+				$user->email = $new_mail;
+			}
+			else if ($user->email != $new_mail) {
+				$page->info("Whoops!", "Your rank prevents you from updating your email address.");
+			}
+			
+			$user->youtube = $page->get("youtube");
+			$user->manual_colour = $page->get("colour");
+			
+			// If the user started it with an @ then we will try to make it okay for
+			// them.
+			if (str_starts_with($user->youtube, "@")) {
+				$user->youtube = substr($user->youtube, 1);
+			}
+			
+			$user->image_type = $page->get("image_type");
+			
+			// HACK This is a quick hack for custom image urls.
+			if ($user->image_type == "url" && $user->is_verified()) {
+				$user->image = $page->get("imageurl");
+			}
+			
+			$user->update_image();
+			
+			// Finally the about section
+			// This is sanitised at display time
+			$user->about = $page->get("about");
+			
+			$user->save();
+			
+			redirect("./@" . $user->name);
+		}
 	}
-	
-	if (user_get_current()->edit_locked) {
-		inform("Edit locked by staff", "Your ability to edit account information has been locked. This could be due to a community guidelines violation relating to your account information.</p><p>If you need to delete your account, please contact staff.");
+	else {
+		$page->info("Oops", "You need to log in to edit your account information!");
 	}
-	
-	$user = new User($user);
-	
-	display_user_banner($user);
-	
-	form_start("./?a=save_account");
-	
-	edit_feild("display", "text", "Display name", "This is the name that will be displayed instead of your handle. It can be any name you prefer to be called.", $user->display);
-	edit_feild("pronouns", "text", "Pronouns", "These are your perferred pronouns; for example, he/him, she/her or they/them. They will be displayed by your name in some contexts.", $user->pronouns);
-	edit_feild("about", "textarea", "About", "You can write a piece of text detailing whatever you like on your userpage. Please don't include personal information!", $user->about);
-	
-	$available_types = [
-		"gravatar" => "Gravatar",
-		"youtube" => "YouTube",
-		"generated" => "Lab Logo",
-	];
-	
-	if ($user->is_verified()) {
-		$available_types["url"] = "Image URL";
-	}
-	
-	edit_feild("image_type", "select", "Profile image source", "Please chose what service your profile image should be derived from.", $user->image_type, true, $available_types);
-	
-	if ($user->is_verified()) {
-		edit_feild("imageurl", "text", "Image URL", "The location of your user image, if set to \"Image URL\".", $user->image);
-	}
-	
-	edit_feild("youtube", "text", "YouTube", "The handle for your YouTube account, if you have one.", $user->youtube);
-	edit_feild("email", "text", "Email", "The email address that you prefer to be contacted about for account related issues.", $user->email, !$user->is_admin());
-	edit_feild("colour", "text", "Page colour", "The base colour that the colour of your userpage is derived from. Represented as hex #RRGGBB.", $user->manual_colour);
-	
-	form_end("Save account details");
-	
-	echo "<h2>Other actions</h2>";
-	
-	edit_feild("download", "label", "Download data", "You can download any data that we are keeping about you and take it to another service.", "<i>Please let a staff member know that you would like data. We should respond within a few days.</i>");
-	edit_feild("delete", "label", "Delete account", "If you would like to delete your account, you can start by clicking the button.", "<a href=\"./?a=account_delete\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_off</span> Delete my account</button></a>");
-	
-	display_user_accent_script($user);
-	
-	include_footer();
-}
+});
 
-function save_account() {
-	/**
-	 * Save account details
-	 */
+$gEndMan->add("user-view", function (Page $page) {
+	$page->force_bs();
 	
-	$user = get_name_if_authed();
+	$stalker = user_get_current();
+	$handle = $page->get("handle");
 	
-	if (!$user) {
-		sorry("Please log in to edit your user preferences.");
+	if (!user_exists($handle)) {
+		$page->info("User not found", "We could not find any user with that name.");
 	}
 	
-	// fuck u /j
-	if (user_get_current()->edit_locked) {
-		inform("Edit locked by staff", "Your ability to edit account information has been locked. This could be due to a community guidelines violation relating to your account information.</p><p>If you need to delete your account, please contact staff.");
+	$user = new User($handle);
+	
+	if ($stalker && user_block_has($stalker->name, $user->name, true, false)) {
+		$page->info("Blocked user", "This user has blocked you from viewing their profile page.");
 	}
 	
-	validate_length("Display name", $_POST["display"], 30);
-	validate_length("Pronouns", $_POST["pronouns"], 30);
-	validate_length("Email", $_POST["email"], 300);
-	validate_length("YouTube", $_POST["youtube"], 30);
-	validate_length("Colour", $_POST["colour"], 7);
-	validate_length("About", $_POST["about"], 2000);
-	validate_length("Image type", $_POST["image_type"], 15);
+	$page_colour = $user->accent[3];
 	
-	if (array_key_exists("imageurl", $_POST)) {
-		validate_length("Image URL", $_POST["imageurl"], 1000);
+	$page->add("
+	<div style=\"margin-bottom: 15px; background: ".$page_colour."3f;\" class=\"card\"><div class=\"card-body\">
+	<div style=\"display: grid; grid-template-columns: 128px auto;\">
+		<div style=\"grid-column: 1;\">
+			<img style=\"width: 128px; border-radius: 64px;\" src=\"$user->image\"/>
+		</div>
+		<div style=\"grid-column: 2; margin-left: 24px;\">
+			<h1>$user->display</h1>
+			<h3>@$handle</h3>
+			<p>$user->pronouns</p>
+		</div>
+	</div>
+	</div></div>");
+	
+	$about_tab = "";
+	
+	$page->add("<nav style=\"margin-bottom: 20px;\">
+			<div class=\"nav nav-tabs\">
+				<button class=\"nav-link active\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\">About</button>
+				<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\">Comments</button>
+				<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\">Actions</button>
+			</div>
+		</nav>");
+	
+	$page->add("<div class=\"tab-content\" id=\"nav-tabContent\">");
+	
+	$page->add("<div class=\"tab-pane fade show active\" id=\"nav-home\" role=\"tabpanel\" aria-labelledby=\"nav-home-tab\" tabindex=\"0\">");
+	
+	if ($user->about) {
+		$page->add("<h3>Description</h3>");
+		$pd = new Parsedown();
+		$pd->setSafeMode(true);
+		$page->add($pd->text($user->about));
 	}
 	
-	$user = new User($user);
-	$user->display = htmlspecialchars($_POST["display"]);
-	$user->pronouns = htmlspecialchars($_POST["pronouns"]);
-	
-	if (($user->display != $user->name) && user_exists($user->display)) {
-		sorry("You cannot set your display name to that of another user's handle.");
+	$page->add("<h3>Statistics</h3>");
+	user_show_stat($page, "Joined", Date("Y-m-d", $user->created));
+	user_show_stat($page, "Last login", Date("Y-m-d", $user->login_time));
+	if ($user->count_roles()) {
+		user_show_stat($page, "Roles", join(", ", $user->roles));
 	}
-	
-	$new_mail = htmlspecialchars($_POST["email"]);
-	
-	if (!$user->is_admin()) {
-		$user->email = $new_mail;
+	if ($user->youtube) {
+		user_show_stat($page, "YouTube", "<a href=\"https://youtube.com/@$user->youtube\">@$user->youtube</a>");
 	}
-	else if ($user->email != $new_mail) {
-		sorry("Your rank prevents you from updating your email address.");
-	}
+	$page->add("</div>");
 	
-	$user->youtube = htmlspecialchars($_POST["youtube"]);
-	$user->manual_colour = htmlspecialchars($_POST["colour"]);
+	$page->add("<div class=\"tab-pane fade\" id=\"nav-profile\" role=\"tabpanel\" aria-labelledby=\"nav-profile-tab\" tabindex=\"0\">");
 	
-	// If the user started it with an @ then we will try to make it okay for
-	// them.
-	if (str_starts_with($user->youtube, "@")) {
-		$user->youtube = substr($user->youtube, 1);
-	}
+	$disc = new Discussion($user->wall);
+	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
 	
-	$user->image_type = $_POST["image_type"];
+	$page->add("</div>");
+	$page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">...</div>");
 	
-	// HACK This is a quick hack for custom image urls.
-	if ($user->image_type == "url" && $user->is_verified()) {
-		$user->image = htmlspecialchars($_POST["imageurl"]);
-	}
-	
-	$user->update_image();
-	
-	// Finally the about section
-	// This is sanitised at display time
-	$user->about = $_POST["about"];
-	
-	$user->save();
-	
-	redirect("/@" . $user->name);
+	$page->add("</div>");
+});
+
+function user_show_stat(Page $page, string $title, string $value) {
+	$page->add("<div style=\"display: inline-block; width: 40%; margin-bottom: 15px;\"><div style=\"display: inline-block; width: 150px;\"><b>$title</b></div>$value</div>");
 }
 
 function display_user(string $user) {
@@ -1493,7 +1531,7 @@ function account_delete() {
 			
 			form_start("./?a=account_delete&submit=1");
 			
-			edit_feild("reason", "text", "Reason", "You can optionally provide us a short reason for deleteing your account.", "");
+			edit_feild("reason", "Reason", "You can optionally provide us a short reason for deleteing your account.", "");
 			edit_feild("understand", "select", "Acknowledgement", "<b>By deleting your account, you agree that your data will be deleted forever, and that there is no possible way we can recover it.</b>", "0", true, array("0" => "No, I don't understand", "1" => "Yes, I understand"));
 			
 			form_end("Delete my account");
@@ -1514,7 +1552,7 @@ function account_delete() {
 			// Validate the length
 			validate_length("Reason", $_POST["reason"], 50);
 			
-			$reason = htmlspecialchars($_POST["reason"]);
+			$reason = $page->get("reason");
 			
 			// Send alert
 			alert("User account $user->name was deleted: $reason");

@@ -103,7 +103,7 @@ function shl_button_fixup() {
 	let all = document.getElementsByTagName("button");
 	
 	for (let e of all) {
-		if (!e.classList.contains("btn")) {
+		if (!e.classList.contains("btn") && !e.classList.contains("nav-link")) {
 			e.classList.add("btn");
 			e.classList.add("btn-outline-secondary");
 		}
