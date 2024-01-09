@@ -8,6 +8,13 @@
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 		<style>
+		.mod-banner {
+			padding: 14em 0 1em 0;
+			border-radius: 1em;
+			background-position: center;
+			background-size: cover;
+		}
+		
 		.mod-edit-property {
 			display: grid;
 			grid-template-columns: 35% auto;
@@ -148,7 +155,7 @@
 									<ul class="dropdown-menu dropdown-menu-end">
 										<li><a class="dropdown-item" href="./@' . $u->name . '">Profile</a></li>
 										<li><a class="dropdown-item" href="./?a=account-edit">Edit Account</a></li>
-										<li><a class="dropdown-item" href="./?a=notifications">Notifications</a></li>
+										<li><a class="dropdown-item" href="./?a=notifications">Notifications</a></li>' . ($u->is_admin() ? '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="./?a=admin_dashboard">Admin</a></li>' : '') . '
 										<li><hr class="dropdown-divider"></li>
 										<li><a class="dropdown-item" href="./?a=logout">Log out</a></li>
 									</ul>

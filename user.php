@@ -1130,8 +1130,6 @@ function get_profile_image(string $user) {
 }
 
 $gEndMan->add("account-edit", function (Page $page) {
-	global $gTitle; $gTitle = "Edit your account";
-	
 	$user = user_get_current();
 	
 	$page->force_bs();
@@ -1142,6 +1140,7 @@ $gEndMan->add("account-edit", function (Page $page) {
 		}
 		
 		if (!$page->has("submit")) {
+			$page->title("Edit your account");
 			$page->heading(1, "Edit account info");
 			
 			$form = new Form("./?a=account-edit&submit=1");
@@ -1238,6 +1237,8 @@ $gEndMan->add("user-view", function (Page $page) {
 		$page->info("Blocked user", "This user has blocked you from viewing their profile page.");
 	}
 	
+	$page->title("$user->display (@$user->name)");
+	
 	$page_colour = $user->accent[3];
 	
 	$page->add("
@@ -1253,8 +1254,6 @@ $gEndMan->add("user-view", function (Page $page) {
 		</div>
 	</div>
 	</div></div>");
-	
-	$about_tab = "";
 	
 	$page->add("<nav style=\"margin-bottom: 20px;\">
 			<div class=\"nav nav-tabs\">

@@ -55,6 +55,7 @@ $gEndMan->add("forum-home", function (Page $page) {
 	$actor = user_get_current();
 	
 	$page->force_bs();
+	$page->title("Forum");
 	$page->heading(1, "Forum");
 	
 	if ($actor) {
@@ -144,6 +145,7 @@ $gEndMan->add("forum-view", function (Page $page) {
 	}
 	
 	// Display title
+	$page->title($thread->title);
 	$page->add("<h1>$thread->title</h1>");
 	
 	// Moderation actions

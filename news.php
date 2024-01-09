@@ -254,7 +254,7 @@ function display_news(Page $page, string $name) : void {
 	$article = new Article($name, $index);
 	
 	// HACK for article titles
-	global $gTitle; $gTitle = $article->title;
+	$page->title($article->title);
 	
 	// include_header();
 	

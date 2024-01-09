@@ -375,6 +375,140 @@ class ModPage {
 	}
 }
 
+$gEndMan->add("mod-view", function (Page $page) {
+	$stalker = user_get_current();
+	$mod_id = $page->get("id");
+	
+	$page->force_bs();
+	
+	if (!((new RevisionDB("mod"))->has($mod_id))) {
+		$page->info("Whoops!", "That mod page wasn't found.");
+	}
+	
+	$mod = new ModPage($mod_id);
+	
+	$page->title($mod->get_display_name());
+	
+	if ($mod->image) {
+		$page->add("<div class=\"mod-banner\" style=\"background-image: linear-gradient(to top, #222c, #0008), url('$mod->image');\">");
+		$page->add("<h1>" . $mod->get_display_name() . "</h1>");
+		$page->add("</div>");
+	}
+	else {
+		$page->add("<h1>" . $mod->get_display_name() . "</h1>");
+	}
+	
+	// Header
+	if ($stalker) {
+		$page->add("<p style=\"margin: 15px 0 15px 0;\">");
+		
+		if (in_array($stalker->name, $mod->creators, true) || $stalker->is_mod()) {
+			$page->add("<a href=\"./?a=edit_mod&m=$mod->package\"><button class=\"btn btn-primary\">Edit this mod</button></a> ");
+		}
+		
+		$page->add("<a href=\"./?a=mod_history&m=$mod->package\"><button class=\"btn btn-outline-primary\">History</button></a> ");
+		
+		if (get_name_if_mod_authed()) {
+			$page->add("<a href=\"./?a=mod-rename&oldslug=$mod->package\"><button class=\"btn btn-outline-primary\">Rename</button></a> ");
+			$page->add("<a href=\"./?a=mod_delete&package=$mod->package\"><button class=\"btn btn-outline-danger\">Delete</button></a> ");
+		}
+		
+		$page->add("</p>");
+	}
+	
+	$page->add("<nav style=\"margin-bottom: 20px;\">
+			<div class=\"nav nav-tabs\">
+				<button class=\"nav-link active\" id=\"nav-about-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-about\" type=\"button\" role=\"tab\" aria-controls=\"nav-about\" aria-selected=\"true\">About</button>
+				<button class=\"nav-link\" id=\"nav-more-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-more\" type=\"button\" role=\"tab\" aria-controls=\"nav-more\" aria-selected=\"false\">More</button>
+				<button class=\"nav-link\" id=\"nav-reviews-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-reviews\" type=\"button\" role=\"tab\" aria-controls=\"nav-reviews\" aria-selected=\"false\">Reviews</button>
+			</div>
+		</nav>");
+	
+	// Start of tabbed content area
+	$page->add("<div class=\"tab-content\" id=\"nav-tabContent\">");
+	
+	// About
+	$page->add("<div class=\"tab-pane fade show active\" id=\"nav-about\" role=\"tabpanel\" aria-labelledby=\"nav-about-tab\" tabindex=\"0\">");
+	
+	// Download area
+	$download_content = "";
+	
+	if (!str_starts_with($mod->download, "http")) {
+		$download_content = $mod->download;
+		
+		if (!$download_content) {
+			$download_content = "<i>No download is available!</i>";
+		}
+	}
+	else if (!$stalker && (time() - $mod->created) < (60 * 60 * 24 * 3)) {
+		$download_content = "<div class=\"thread-card\">
+		<p><b>You need an account to view this info.</b></p>
+		<p>To prevent spam, mods created in the last 3 days cannot be downloaded by users without an account. Please create an account or come back soon!</p>
+		<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
+	</div>";
+	}
+	else {
+		$download_content = "<p>
+		<a href=\"$mod->download\"><button class=\"btn btn-primary\">Download</button></a>
+		<button id=\"shl-mod-copy-url\" class=\"btn btn-outline-primary\" onclick=\"shl_copy('$mod->download', 'shl-mod-copy-url')\">Copy link</button>
+		</p>";
+	}
+	
+	// Creators list
+	// This code sucks
+	$creators_content = "<!-- Where the fuck does this p tag come from??? -->";
+	
+	for ($i = 0; $i < sizeof($mod->creators); $i++) {
+		$user = $mod->creators[$i];
+		
+		$on_site = user_exists($user);
+		$pfp = "./?a=generate-logo-coloured&seed=$user";
+		
+		if ($on_site) {
+			$user = new User($user);
+			$pfp = $user->image;
+		}
+		
+		$creators_content .= "<div style=\"display: grid; grid-template-columns: 32px auto;\">
+<div style=\"grid-column: 1; align-items: center;\"><img src=\"$pfp\" style=\"width: 32px; height: 32px; border-radius: 16px;\"/></div>
+<div style=\"grid-column: 2; margin-left: 0.5em; align-items: center;\"><p>" . ($on_site ? "<a href=\"./@$user->name\">$user->display</a> (@$user->name)" : $user) . "</p></div>
+</div>";
+	}
+	
+	if ($mod->description) {
+		$pd = new Parsedown();
+		$pd->setSafeMode(true);
+		$page->add($pd->text($mod->description));
+	}
+	
+	$page->add("<h3>Download</h3>" . $download_content);
+	$page->add("<h3>Creators</h3>" . $creators_content);
+	
+	$page->add("</div>");
+	
+	// More
+	$page->add("<div class=\"tab-pane fade\" id=\"nav-more\" role=\"tabpanel\" aria-labelledby=\"nav-more-tab\" tabindex=\"0\">");
+	$page->add("<p class=\"small-text\">This page was last updated at " . date("Y-m-d H:i", $mod->updated) . " by " . get_nice_display_name($mod->author) . "</p>");
+	$page->add("</div>");
+	
+	// Reviews
+	$page->add("<div class=\"tab-pane fade\" id=\"nav-reviews\" role=\"tabpanel\" aria-labelledby=\"nav-reviews-tab\" tabindex=\"0\">");
+	$disc = new Discussion($mod->reviews);
+	$page->add($disc->render_reverse("Reviews", "./?m=" . $mod->package));
+	$page->add("</div>");
+	
+	// End of tabbed area
+	$page->add("</div>");
+	
+	// mod_property("Download", "A link to where the mod can be downloaded.", $download_content, true);
+	// mod_property("Version", "The latest version of this mod.", $mod->version, true);
+	// mod_property("Creators", "The people who created this mod.", $creators_content, true);
+	
+	// mod_property("Wiki article", "A relevant wiki article about the mod.", $mod->wiki, true);
+	// mod_property("Source code", "A link to where the source code for a mod can be found.", $mod->code, true);
+	// mod_property("Status", "A short description of the mod's development status.", $mod->status, true);
+});
+
 function display_mod() {
 	/**
 	 * Ugly HACK -ed version to make the title display without much effort.
@@ -555,7 +689,8 @@ $gEndMan->add("mod-list", function (Page $page) {
 	
 	$list = $db->enumerate();
 	
-	//include_header();
+	$page->title("List of mods");
+	
 	$page->add( "<h1>List of Mods</h1>" );
 	
 	// Make mod modual
