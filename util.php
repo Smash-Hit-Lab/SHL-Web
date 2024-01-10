@@ -85,6 +85,16 @@ function frand() : float {
 	return mt_rand() / mt_getrandmax();
 }
 
+function copy_object_vars(object &$to, object $from) {
+	/**
+	 * Load everything from object $from into object $to
+	 */
+	
+	foreach (get_object_vars($from) as $key => $value) {
+		$to->$key = $value;
+	}
+}
+
 function __js_style_var__(string $var, string $val) : string {
 	return "qs.style.setProperty('$var', '$val');";
 }
