@@ -145,14 +145,14 @@ $gEndMan->add("contest-view", function (Page $page) {
 			$desc_text = str_replace("\n", "<br/>", $submission->desc);
 			
 			$page->add("
-			<div class=\"card\" style=\"margin: 12px 0 12px 0;\">
+			<div id=\"sub-$submission->id\" class=\"card\" style=\"margin: 12px 0 12px 0;\">
 				<div class=\"card-header\"><b>$submission->title</b> by $creator_text</div>
 				<div class=\"card-body\">
 					<p class=\"card-text\"><b>Submitted on:</b> $time_text</p>
 					<p class=\"card-text\"><b>URL:</b> <a href=\"$submission->url\">$submission->url</a></p>
 					<p class=\"card-text\"><b>Description:</b><br/>$desc_text</p>
 				</div>
-				<div class=\"card-footer text-body-secondary\">Submission ID: $submission->id</div>
+				<div class=\"card-footer text-body-secondary\">Submission ID: <a class=\"text-body-secondary\" href=\"#sub-$submission->id\">$submission->id</a></div>
 			</div>");
 		}
 	}
