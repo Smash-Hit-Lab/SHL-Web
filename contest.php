@@ -7,12 +7,17 @@ class Contest {
 	public $title;
 	public $due;
 	public $submissions;
+	public $desc;
 	
 	function __construct(?string $id) {
 		$db = new Database("contests");
 		
 		if ($id && $db->has($id)) {
 			copy_object_vars($this, $db->load($id));
+			
+			if (!isset($this->desc)) {
+				$this->desc = "";
+			}
 		}
 		else {
 			$this->id = random_base32(32);
@@ -21,6 +26,7 @@ class Contest {
 			$this->title = "";
 			$this->due = time();
 			$this->submissions = [];
+			$this->desc = "";
 		}
 	}
 	
@@ -83,6 +89,7 @@ $gEndMan->add("contest-create", function (Page $page) {
 			$form = new Form("./?a=contest-create&submit=1");
 			$form->textbox("title", "Title", "The name of the contest.");
 			$form->textbox("due", "Due date", "The date that the contest will stop accepting submissions.");
+			$form->textaera("desc", "Description", "Optionally describe the contest and its rules.");
 			$form->submit("Create contest");
 			
 			$page->add($form);
@@ -93,6 +100,7 @@ $gEndMan->add("contest-create", function (Page $page) {
 			$contest->creator = $user->name;
 			$contest->title = $page->get("title", true, 200);
 			$contest->due = strtotime($page->get("due"));
+			$contest->desc = $page->get("desc", false, 10000, SANITISE_NONE);
 			
 			$contest->save();
 			
@@ -113,7 +121,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 	
 	if (!contest_exists($contest_id)) {
 		$page->info("Sorry!", "There is no contest by that ID.");
-	}	
+	}
 	
 	$contest = new Contest($contest_id);
 	
@@ -122,12 +130,25 @@ $gEndMan->add("contest-view", function (Page $page) {
 	
 	// Contest title and basic stats
 	$page->heading(1, $contest->title);
+	
+	if ($contest->creator === $user->name) {
+		$page->link_button("", "Edit contest info", "./?a=contest-edit&id=$contest_id", true);
+	}
+	
 	$page->para("<b>Created on:</b> " . date("Y-m-d H:i:s", $contest->created));
 	$page->para("<b>Ends on:</b> " . date("Y-m-d H:i:s", $contest->due));
 	$page->para("<b>Hosted by:</b> @$contest->creator");
 	
+	// Description section
+	if ($contest->desc) {
+		$page->heading(2, "Description");
+		$pd = new Parsedown();
+		$pd->setSafeMode(true);
+		$page->add($pd->text($contest->desc));
+	}
+	
 	// Submissions section
-	$page->heading(3, "Submissions");
+	$page->heading(2, "Submissions");
 	
 	if ($contest->due > time()) {
 		$page->link_button("", "Create a submission", "./?a=contest-submit&id=$contest_id", true);
@@ -143,6 +164,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 			$creator_text = $submission->anon ? "<i>$submission->creator (anon)</i>" : "<a href=\"./@$submission->creator\">@$submission->creator</a>";
 			$time_text = date("Y-m-d H:i", $submission->created);
 			$desc_text = str_replace("\n", "<br/>", $submission->desc);
+			$desc_text = $desc_text ? "<p class=\"card-text\"><b>Description:</b><br/>$desc_text</p>" : "";
 			
 			$page->add("
 			<div id=\"sub-$submission->id\" class=\"card\" style=\"margin: 12px 0 12px 0;\">
@@ -150,11 +172,58 @@ $gEndMan->add("contest-view", function (Page $page) {
 				<div class=\"card-body\">
 					<p class=\"card-text\"><b>Submitted on:</b> $time_text</p>
 					<p class=\"card-text\"><b>URL:</b> <a href=\"$submission->url\">$submission->url</a></p>
-					<p class=\"card-text\"><b>Description:</b><br/>$desc_text</p>
+					$desc_text
 				</div>
 				<div class=\"card-footer text-body-secondary\">Submission ID: <a class=\"text-body-secondary\" href=\"#sub-$submission->id\">$submission->id</a></div>
 			</div>");
 		}
+	}
+});
+
+$gEndMan->add("contest-edit", function (Page $page) {
+	$user = user_get_current();
+	
+	if ($user) {
+		$id = $page->get("id");
+		
+		if (!contest_exists($id)) {
+			$page->info("Whoops!", "The contest that you want to edit doesn't seem to exist.");
+		}
+		
+		$contest = new Contest($id);
+		
+		// Handle contest editor permissions
+		if ($contest->creator !== $user->name) {
+			$page->info("Sorry", "You are not allowed to edit this contest becuase you did not create it.");
+		}
+		
+		if (!$page->has("submit")) {
+			$page->force_bs();
+			$page->title("Edit $contest->title");
+			$page->heading(1, "Edit $contest->title");
+			
+			$form = new Form("./?a=contest-edit&id=$contest->id&submit=1");
+			$form->textbox("title", "Title", "The name of the contest.", $contest->title);
+			$form->textbox("due", "Due date", "The date that the contest will stop accepting submissions.", date("Y-m-d H:i:s", $contest->due));
+			$form->textaera("desc", "Description", "Optionally describe the contest and its rules.", $contest->desc);
+			$form->submit("Save changes");
+			
+			$page->add($form);
+		}
+		else {
+			$contest->title = $page->get("title", true, 200);
+			$contest->due = strtotime($page->get("due"));
+			$contest->desc = $page->get("desc", false, 10000, SANITISE_NONE);
+			
+			$contest->save();
+			
+			alert("Contest manager @$user->name updated contest $contest->id", "./?a=contest-view&id=$contest->id");
+			
+			$page->redirect("./?a=contest-view&id=$contest->id");
+		}
+	}
+	else {
+		$page->info("Whoops!", "Please log in to edit contests.");
 	}
 });
 
