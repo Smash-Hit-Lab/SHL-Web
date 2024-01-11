@@ -182,8 +182,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 			$time_text = date("Y-m-d H:i", $submission->created);
 			$desc_text = str_replace("\n", "<br/>", $submission->desc);
 			$desc_text = $desc_text ? "<p class=\"card-text\"><b>Description:</b><br/>$desc_text</p>" : "";
-			$sak = $user->get_sak();
-			$delete_text = ($user && $contest->creator === $user->name) ? "<a href=\"./?a=contest-delete-submission&cid=$contest->id&sid=$submission->id&csrf=$sak\" class=\"btn btn-outline-danger\">Delete</a>" : "";
+			$delete_text = ($user && $contest->creator === $user->name) ? ("<a href=\"./?a=contest-delete-submission&cid=$contest->id&sid=$submission->id&csrf=" . $user->get_sak() . "\" class=\"btn btn-outline-danger\">Delete</a>") : "";
 			
 			$page->add("
 			<div id=\"sub-$submission->id\" class=\"card\" style=\"margin: 12px 0 12px 0;\">
