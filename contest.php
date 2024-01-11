@@ -38,6 +38,18 @@ class Contest {
 	function add_submission(string $id) {
 		$this->submissions[] = $id;
 	}
+	
+	function disassociate_submission(string $id) : bool {
+		$index = array_search($id, $this->submissions, true);
+		
+		if ($index === false) {
+			return false;
+		}
+		
+		array_splice($this->submissions, $index, 1);
+		
+		return true;
+	}
 }
 
 function contest_exists(string $id) {
@@ -74,6 +86,11 @@ class ContestSubmission {
 	function save() {
 		$db = new Database("contest_submissions");
 		$db->save($this->id, $this);
+	}
+	
+	function delete() {
+		$db = new Database("contest_submissions");
+		$db->delete($this->id);
 	}
 }
 
@@ -131,12 +148,12 @@ $gEndMan->add("contest-view", function (Page $page) {
 	// Contest title and basic stats
 	$page->heading(1, $contest->title);
 	
-	if ($contest->creator === $user->name) {
+	if ($user && $contest->creator === $user->name) {
 		$page->link_button("", "Edit contest info", "./?a=contest-edit&id=$contest_id", true);
 	}
 	
 	$page->para("<b>Created on:</b> " . date("Y-m-d H:i:s", $contest->created));
-	$page->para("<b>Ends on:</b> " . date("Y-m-d H:i:s", $contest->due));
+	$page->para("<b>" . ($contest->due > time() ? "Ends" : "Ended") . " on:</b> " . date("Y-m-d H:i:s", $contest->due));
 	$page->para("<b>Hosted by:</b> @$contest->creator");
 	
 	// Description section
@@ -165,6 +182,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 			$time_text = date("Y-m-d H:i", $submission->created);
 			$desc_text = str_replace("\n", "<br/>", $submission->desc);
 			$desc_text = $desc_text ? "<p class=\"card-text\"><b>Description:</b><br/>$desc_text</p>" : "";
+			$sak = $user->get_sak();
 			
 			$page->add("
 			<div id=\"sub-$submission->id\" class=\"card\" style=\"margin: 12px 0 12px 0;\">
@@ -173,6 +191,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 					<p class=\"card-text\"><b>Submitted on:</b> $time_text</p>
 					<p class=\"card-text\"><b>URL:</b> <a href=\"$submission->url\">$submission->url</a></p>
 					$desc_text
+					<a href=\"./?a=contest-delete-submission&cid=$contest->id&sid=$submission->id&csrf=$sak\" class=\"btn btn-outline-danger\">Delete</a>
 				</div>
 				<div class=\"card-footer text-body-secondary\">Submission ID: <a class=\"text-body-secondary\" href=\"#sub-$submission->id\">$submission->id</a></div>
 			</div>");
@@ -289,5 +308,44 @@ $gEndMan->add("contest-submit", function (Page $page) {
 		
 		// Redirect back to contest view page
 		$page->redirect("./?a=contest-view&id=$contest->id");
+	}
+});
+
+$gEndMan->add("contest-delete-submission", function (Page $page) {
+	$user = user_get_current();
+	$cid = $page->get("cid");
+	$sid = $page->get("sid");
+	
+	if ($user) {
+		if (!$user->verify_sak($page->get("csrf"))) {
+			$page->info("CSRF detected", "A possible CSRF attack was detected.");
+		}
+		
+		if (!contest_exists($cid)) {
+			$page->info("Contest not found", "The contest with the given ID was not found.");
+		}
+		
+		$contest = new Contest($cid);
+		
+		if ($contest->creator === $user->name) {
+			if (!$contest->disassociate_submission($sid)) {
+				$page->info("Failed to delete", "Failed to delete item.");
+			}
+			
+			$contest->save();
+			
+			$submission = new ContestSubmission($sid);
+			$submission->delete();
+			
+			alert("Contest manager @$user->name deleted submission ID $submission->id ($submission->title)", "./?a=contest-view&id=$contest->id");
+			
+			$page->redirect("./?a=contest-view&id=$contest->id");
+		}
+		else {
+			$page->info("Sorry", "Only the creator of a contest can delete a submission from it.");
+		}
+	}
+	else {
+		$page->info("Not logged in", "You need to log in to delete a submission.");
 	}
 });

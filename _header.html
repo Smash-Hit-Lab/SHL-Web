@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<meta name="description" content="A passionate community of creators, programmers and players of the mobile game Smash Hit.">
+		<meta name="description" content="<?php if (isset($gTitle)) { echo $gTitle; } else { echo 'View this page on the Smash Hit Lab!'; } ?>">
 		<meta name="keywords" content="smash hit, smash, hit, mobile, game, mobile game, glass, glass game, break glass, break glass game, break, destruction, destruction game, modding, mods, mod, modification, smash hit lab, lab">
 		<meta name="author" content="Smash Hit Lab">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -167,11 +167,11 @@
 							echo "<img class=\"navbar-profile\" src=\"$image\"/>";
 							echo "<div class=\"shl-old-profile-dropdown-main right\">";
 							
-							nav_dropdown_item("account_circle", "Profile", "/?u=$user_name");
+							nav_dropdown_item("account_circle", "Profile", "/@$user_name");
 							if ($u->is_admin()) {
 								nav_dropdown_item("apps", "Dashboard", "/?a=admin_dashboard");
 							}
-							nav_dropdown_item("manage_accounts", "Account", "/?a=edit_account");
+							// nav_dropdown_item("manage_accounts", "Account", "/?a=edit_account");
 							nav_dropdown_item("notifications", "Notifications", "/?a=notifications");
 							if (!$u->has_role("impersonateable")) {
 								nav_dropdown_item("logout", "Logout", "/?a=logout");
