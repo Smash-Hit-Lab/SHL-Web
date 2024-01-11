@@ -56,7 +56,7 @@
 	}
 	
 	function ds_render_comment(hidden, image, author, display, time, body, actions, index, badge, pronouns) {
-		return "<div class=\"card comment-card\" " + (hidden ? "style=\"opacity: 0.6;\"" : "") + " style=\"margin-bottom: 10px;\"><div class=\"card-body\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./?u=" + author + "\">" + display + "</a> · @" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div></div>";
+		return "<div class=\"card comment-card\" " + (hidden ? "style=\"opacity: 0.6;\"" : "") + " style=\"margin-bottom: 10px;\"><div class=\"card-body\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./@" + author + "\">" + display + "</a> · @" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div></div>";
 	}
 	
 	function ds_load_handle() {

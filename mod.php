@@ -488,6 +488,17 @@ $gEndMan->add("mod-view", function (Page $page) {
 	
 	// More
 	$page->add("<div class=\"tab-pane fade\" id=\"nav-more\" role=\"tabpanel\" aria-labelledby=\"nav-more-tab\" tabindex=\"0\">");
+	
+	$qiEntries = [["version", "Version"], ["wiki", "Wiki article"], ["code", "Source files"], ["status", "Status"]];
+	
+	for ($i = 0; $i < sizeof($qiEntries); $i++) {
+		$propname = $qiEntries[$i][0];
+		
+		if ($mod->$propname) {
+			$page->para("<b>" . $qiEntries[$i][1] . ":</b> " . $mod->$propname);
+		}
+	}
+	
 	$page->add("<p class=\"small-text\">This page was last updated at " . date("Y-m-d H:i", $mod->updated) . " by " . get_nice_display_name($mod->author) . "</p>");
 	$page->add("</div>");
 	

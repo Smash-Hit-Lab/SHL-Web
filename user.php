@@ -1259,14 +1259,18 @@ $gEndMan->add("user-view", function (Page $page) {
 	$page->add("<nav style=\"margin-bottom: 20px;\">
 			<div class=\"nav nav-tabs\">
 				<button class=\"nav-link active\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\">About</button>
-				<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\">Comments</button>
 				<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\">Actions</button>
+				<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\">Comments</button>
 			</div>
 		</nav>");
 	
 	$page->add("<div class=\"tab-content\" id=\"nav-tabContent\">");
 	
 	$page->add("<div class=\"tab-pane fade show active\" id=\"nav-home\" role=\"tabpanel\" aria-labelledby=\"nav-home-tab\" tabindex=\"0\">");
+	
+	if ($user->is_banned()) {
+		$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">This user is banned until " . $user->unban_date() . ".</div></div>");
+	}
 	
 	if ($user->about) {
 		$page->add("<h3>Description</h3>");
@@ -1295,13 +1299,8 @@ $gEndMan->add("user-view", function (Page $page) {
 	$page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">");
 	
 	if ($stalker && $stalker->is_mod()) {
-		// if ($user->is_banned()) {
-		// 	mod_property("Unban time", "The time at which this user will be allowed to log in again.", $user->unban_date());
-		// }
-		
 		// If the wanted user isn't admin, we can ban them
 		if (!$user->is_admin() && $stalker->name != $user->name) {
-			// mod_property("Ban user", "Banning this user will revoke access and prevent them from logging in until a set amount of time has passed.", "<a href=\"\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">gavel</span> Ban @$user->name</button></a>");
 			$page->heading(3, "Ban");
 			$page->para("Ban or unban this user.");
 			$page->link_button("", $user->is_banned() ? "Unban user" : "Ban user", "./?a=user_ban&handle=$user->name");
@@ -1309,13 +1308,11 @@ $gEndMan->add("user-view", function (Page $page) {
 		
 		// Only admins can change ranks
 		if ($stalker->is_admin()) {
-			// mod_property("Change roles", "Roles set permissions for what users are allowed to do. They are often used for giving someone moderator or manager privleges.", "<a href=\"./?a=user_roles&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">security</span> Edit roles</button></a>");
 			$page->heading(3, "Roles");
 			$page->para("Actions related to roles and premissions.");
 			$page->link_button("", "Change roles", "./?a=user_roles&handle=$user->name");
 		}
 		
-		// mod_property("Verified", "Verified members are checked by staff to be who they claim they are.", "<a href=\"./?a=user_verify&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">verified</span> Toggle verified status</button></a>");
 		$page->heading(3, "Verification");
 		$page->para("Verification allows normal users to access more powerful actions.");
 		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user_verify&handle=$user->name");
@@ -1323,7 +1320,6 @@ $gEndMan->add("user-view", function (Page $page) {
 	
 	// Block user
 	if ($stalker && $stalker->name != $user->name) {
-		// mod_property("Block user", "Blocking this user will prevent you from seeing some of the things this user does and prevent this user from seeing things you do. You might still see some things as blocking is still in a testing state.", "<a href=\"./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak() . "\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">block</span> Block user</button></a>");
 		$page->heading(3, "Blocking");
 		$page->para("Blocking this user will allow you to hide them from your account.");
 		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak());
