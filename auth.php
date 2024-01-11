@@ -398,10 +398,10 @@ $gEndMan->add("auth-reset-password", function(Page $page) {
 		
 		$user = new User($handle);
 		
-		$result = $user->do_reset($code);
+		$new_pw = $user->do_reset($code);
 		
-		if ($result) {
-			$page->info("Yay!", "Your password was reset! It will be sent to your email.");
+		if ($new_pw) {
+			$page->info("Yay!", "Your password was reset! Your new password is <code>$new_pw</code>.");
 		}
 		else {
 			$page->info("Reset password", "Unforunately, your password reset did not work. It might be becuase your account does not exist or you typed the code wrong.");

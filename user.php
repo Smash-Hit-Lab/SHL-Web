@@ -679,20 +679,19 @@ class User {
 		$this->save();
 	}
 	
-	function do_reset(string $code) : bool {
+	function do_reset(string $code) : ?string {
 		$reset_ok = ($this->pw_reset && ($this->pw_reset === hash("sha256", $code)));
+		$pw = null;
 		
 		if ($reset_ok) {
 			$pw = $this->new_password();
-			
-			mail($this->email, "Your account has a new password!", "<html><body><p>Hello $this->name,</p><p>Your password reset at the Smash Hit Lab has succeded!</p><p>Your new password is: " . htmlspecialchars($pw) . "</p><p>If you did not ask for a password reset, report this to staff immediately.</p></body></html>", array("MIME-Version" => "1.0", "Content-Type" => "text/html; charset=utf-8"));
 		}
 		
 		// we always clear the reset even if it failed
 		$this->pw_reset = "";
 		$this->save();
 		
-		return $reset_ok;
+		return $pw;
 	}
 	
 	function set_email(string $email) : void {
