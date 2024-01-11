@@ -1240,7 +1240,7 @@ $gEndMan->add("user-view", function (Page $page) {
 	
 	$page->title("$user->display (@$user->name)");
 	
-	$page_colour = $user->accent[3];
+	$page_colour = $user->accent ? $user->accent[3] : "#ffffff";
 	
 	$page->add("
 	<div style=\"margin-bottom: 15px; background: ".$page_colour."3f;\" class=\"card\"><div class=\"card-body\">
@@ -1292,7 +1292,49 @@ $gEndMan->add("user-view", function (Page $page) {
 	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
 	
 	$page->add("</div>");
-	$page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">...</div>");
+	$page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">");
+	
+	if ($stalker && $stalker->is_mod()) {
+		// if ($user->is_banned()) {
+		// 	mod_property("Unban time", "The time at which this user will be allowed to log in again.", $user->unban_date());
+		// }
+		
+		// If the wanted user isn't admin, we can ban them
+		if (!$user->is_admin() && $stalker->name != $user->name) {
+			// mod_property("Ban user", "Banning this user will revoke access and prevent them from logging in until a set amount of time has passed.", "<a href=\"\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">gavel</span> Ban @$user->name</button></a>");
+			$page->heading(3, "Ban");
+			$page->para("Ban or unban this user.");
+			$page->link_button("", $user->is_banned() ? "Unban user" : "Ban user", "./?a=user_ban&handle=$user->name");
+		}
+		
+		// Only admins can change ranks
+		if ($stalker->is_admin()) {
+			// mod_property("Change roles", "Roles set permissions for what users are allowed to do. They are often used for giving someone moderator or manager privleges.", "<a href=\"./?a=user_roles&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">security</span> Edit roles</button></a>");
+			$page->heading(3, "Roles");
+			$page->para("Actions related to roles and premissions.");
+			$page->link_button("", "Change roles", "./?a=user_roles&handle=$user->name");
+		}
+		
+		// mod_property("Verified", "Verified members are checked by staff to be who they claim they are.", "<a href=\"./?a=user_verify&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">verified</span> Toggle verified status</button></a>");
+		$page->heading(3, "Verification");
+		$page->para("Verification allows normal users to access more powerful actions.");
+		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user_verify&handle=$user->name");
+	}
+	
+	// Block user
+	if ($stalker && $stalker->name != $user->name) {
+		// mod_property("Block user", "Blocking this user will prevent you from seeing some of the things this user does and prevent this user from seeing things you do. You might still see some things as blocking is still in a testing state.", "<a href=\"./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak() . "\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">block</span> Block user</button></a>");
+		$page->heading(3, "Blocking");
+		$page->para("Blocking this user will allow you to hide them from your account.");
+		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak());
+	}
+	else {
+		$page->heading(3, "Account");
+		$page->para("Settings related to your own account.");
+		$page->link_button("", "Edit account", "./?a=account-edit");
+	}
+	
+	$page->add("</div>");
 	
 	$page->add("</div>");
 });
