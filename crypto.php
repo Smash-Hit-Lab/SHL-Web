@@ -29,6 +29,8 @@ function random_base64(int $nchar) : string {
 function random_password() : string {
 	/**
 	 * Randomly generates a new password.
+	 * 
+	 * DEPRECATED: This is buggy as shit and it's a little jank imo.
 	 */
 	
 	$alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*-_+=[]{}<>()";

@@ -134,8 +134,8 @@ function auth_login_action(Page $page) {
 		
 		// If this is an admin, warn about failed logins.
 		if ($user->is_admin()) {
-			mail($user->email, "Failed login for " . $handle, "For site safety purposes, admins are informed any time a failed login occurs on their account. If this was you, there is no need to worry.\n\nUsername: " . $handle . "\nPassword: " . htmlspecialchars($password) . "\nIP Address: " . $real_ip);
-			alert("Failed login for " . $handle . ", staff should make sure everything is okay.");
+			// mail($user->email, "Failed login for " . $handle, "For site safety purposes, admins are informed any time a failed login occurs on their account. If this was you, there is no need to worry.\n\nUsername: " . $handle . "\nPassword: " . htmlspecialchars($password) . "\nIP Address: " . $real_ip);
+			alert("Failed login for admin @$handle.");
 		}
 		
 		// We send a notification to that user when they fail to log in
@@ -145,9 +145,6 @@ function auth_login_action(Page $page) {
 		notify($user->name, "Login failed from $real_ip", "/");
 		
 		$page->info("Sorry!", "Something went wrong while logging in. Make sure your username and password are correct, then try again.");
-	}
-	else if ($user->is_mod()) {
-	    //alert("The moderator or manager @$handle has logged in");
 	}
 	
 	// We should be able to log the user in
@@ -221,7 +218,7 @@ function auth_register_form(Page $page) {
 	$form = new Form("./?a=auth-register&submit=1");
 	//$form->set_container_type(FORM_CONTAINER_BLANK);
 	$form->textbox("handle", "Handle", "Pick a handle name that you would like. Please note that you can't change it later.");
-	$form->textbox("email", "Email", "The email address you wish to assocaite with your account.");
+	// $form->textbox("email", "Email", "The email address you wish to assocaite with your account.");
 	$form->day("birth", "Birthday", "Please enter your birthday so we can verify that you are old enough to join the Smash Hit Lab.");
 	$form->container("Password", "A special string of characters you need in order to log in to your account.", "
 			<ul>
