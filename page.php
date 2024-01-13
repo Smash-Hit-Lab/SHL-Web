@@ -63,7 +63,7 @@ class Page {
 		$this->http_header("Cache-Control", "max-age=86400");
 	}
 	
-	function info($title = "Done", $desc = "The action completed successfully.") : void {
+	function info($title = "Done", $desc = "") : void {
 		if ($this->mode != PAGE_MODE_API) {
 			include_header(true);
 			echo "<h1>$title</h1><p>$desc</p>";
@@ -188,6 +188,12 @@ class Page {
 	
 	function has(string $key) : bool {
 		return (array_key_exists($key, $_POST) || array_key_exists($key, $_GET));
+	}
+	
+	function csrf(User $user) {
+		if (!$user->verify_sak($this->get("key"))) {
+			$this->info("CSRF attack detected", "A CSRF attack was detected. If you encoutered this while trying to use the site normally, please report this issue to staff.");
+		}
 	}
 	
 	function title(string $title) : void {

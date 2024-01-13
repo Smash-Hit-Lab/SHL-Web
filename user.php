@@ -1166,13 +1166,15 @@ $gEndMan->add("account-edit", function (Page $page) {
 			$page->add($form);
 			
 			$page->heading(2, "Download your data");
-			$page->add("<i>Please let a staff member know that you would like data. We should respond within a few days.</i>");
+			$page->para("At the moment we must manually collect the data we store about you. Firstly, make sure you set an email above. Then please send an email to <a href=\"mailto:cddepppp256@gmail.com\">cddepppp256@gmail.com</a>.");
 			
 			$page->heading(2, "Delete your account");
 			$page->add("<p>If you would like to delete your account and associated data, you can start by clicking the button. <b>This action cannot be undone!</b></p><p><a href=\"./?a=account_delete\"><button class=\"btn btn-danger\">Delete account</button></a></p>");
 		}
 		else {
 			$user = user_get_current();
+			
+			$page->csrf($user);
 			
 			$user->display = $page->get("display");
 			$user->pronouns = $page->get("pronouns");

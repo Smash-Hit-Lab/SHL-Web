@@ -97,7 +97,7 @@ function auth_login_action(Page $page) {
 	if (!user_exists($handle)) {
 		$gEvents->trigger("user.login.failed.wrong_handle", $page);
 		
-		$page->info("Sorry!", "Something went wrong while logging in. Make sure your username and password are correct, then try again.");
+		$page->info("Login failed!", "There isn't any user with the name you typed. Make sure that there are no errors in the handle you typed and try again.");
 	}
 	
 	// Now that we know we can, open the user's info!
@@ -159,7 +159,7 @@ function auth_login_action(Page $page) {
 		$page->redirect($page->get("redirect"));
 	}
 	else {
-		$page->redirect("/?u=$handle");
+		$page->redirect("./@$handle");
 	}
 }
 
@@ -319,7 +319,7 @@ function auth_register_action(Page $page) {
 	}
 	
 	// Alert the admins of the new account
-	alert("New user account @$handle was registered", "./?u=$handle");
+	alert("New user account @$handle was registered", "./@$handle");
 	
 	// If this is the first user, grant them all roles
 	if (auth_register_first_user()) {
@@ -354,7 +354,10 @@ $gEndMan->add("auth-register", function(Page $page) {
 
 $gEndMan->add("auth-logout", function(Page $page) {
 	$token = $page->get_cookie("tk");
-	$lockbox = $page->get_cookie("lb");
+	$sak = $page->get("key");
+	
+	// User SAK verification
+	$page->csrf(user_get_current());
 	
 	// Delete the token on the server
 	$db = new Database("token");

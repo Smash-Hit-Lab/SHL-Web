@@ -159,7 +159,7 @@ class Article {
 		return $html;
 	}
 	
-	function render_update() {
+	function render_update(User $user) {
 		$content = file_get_contents("../../data/_news_editor.html");
 		
 		$content = str_replace("NAME", $this->name, $content);
@@ -172,6 +172,8 @@ class Article {
 		else {
 			$content = str_replace("SELECTED_IF_PRIVATE", "selected", $content);
 		}
+		
+		$content = str_replace("USER_SAK", $user->get_sak(), $content);
 		
 		return $content;
 	}
@@ -300,23 +302,25 @@ $gEndMan->add("news-view", function (Page $page) {
 });
 
 $gEndMan->add("news-update", function(Page $page) {
-	$user = get_name_if_admin_authed();
+	$user = user_get_current();
 	
 	$page->force_bs();
 	
-	if ($user) {
+	if ($user && $user->is_admin()) {
 		if (!$page->has("submit")) {
 			$article = new Article($page->get("n"));
-			$page->add($article->render_update());
+			$page->add($article->render_update($user));
 		}
 		else {
+			$page->csrf($user);
+			
 			// We are allowed to update the article ...
 			$article = new Article($page->get("n"));
-			$article->update($page->get("title"), $page->get("body", true, null, SANITISE_NONE), $user);
+			$article->update($page->get("title"), $page->get("body", true, null, SANITISE_NONE), $user->name);
 			$article->set_permissions($page->get("permissions"));
 			$article->save();
 			
-			alert("Article \"$article->title\" ($article->name) has been updated by @$user", "./?n=$article->name");
+			alert("Article \"$article->title\" ($article->name) has been updated by @$user->name", "./?n=$article->name");
 			
 			redirect("./?n=$article->name");
 		}

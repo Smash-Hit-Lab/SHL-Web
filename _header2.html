@@ -159,7 +159,7 @@
 										<li><a class="dropdown-item" href="./?a=account-edit">Edit Account</a></li>
 										<li><a class="dropdown-item" href="./?a=notifications">Notifications</a></li>' . ($u->is_admin() ? '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="./?a=admin_dashboard">Admin</a></li>' : '') . '
 										<li><hr class="dropdown-divider"></li>
-										<li><a class="dropdown-item" href="./?a=logout">Log out</a></li>
+										<li><a class="dropdown-item" href="./?a=auth-logout&key=' . $u->get_sak() . '">Log out</a></li>
 									</ul>
 								</li>';
 							}
