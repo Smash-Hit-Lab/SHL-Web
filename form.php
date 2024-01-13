@@ -106,7 +106,7 @@ class Form {
 		$data = "";
 		
 		// Year
-		$data .= "<select name=\"$name-year\" style=\"width: 5em; margin-right: 0.5em;\">";
+		$data .= "<select class=\"form-select form-control\" name=\"$name-year\">";
 			$data .= "<option value=\"\" selected disabled hidden>Year</option>";
 			for ($i = 2023; $i >= 1950; $i--) {
 				$data .= "<option value=\"$i\">$i</option>";
@@ -114,7 +114,7 @@ class Form {
 		$data .= "</select>";
 		
 		// Month
-		$data .= "<select name=\"$name-month\" style=\"width: 8em; margin-right: 0.5em;\">";
+		$data .= "<select class=\"form-select form-control\" name=\"$name-month\">";
 			$data .= "<option value=\"\" selected disabled hidden>Month</option>";
 			$data .= "<option value=\"1\">Janurary</option>";
 			$data .= "<option value=\"2\">Feburary</option>";
@@ -131,7 +131,7 @@ class Form {
 		$data .= "</select>";
 		
 		// Day
-		$data .= "<select name=\"$name-day\" style=\"width: 4em;\">";
+		$data .= "<select class=\"form-select form-control\" name=\"$name-day\">";
 			$data .= "<option value=\"\" selected disabled hidden>Day</option>";
 			for ($i = 32; $i > 0; $i--) {
 				$data .= "<option value=\"$i\">$i</option>";

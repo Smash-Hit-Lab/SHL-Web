@@ -63,7 +63,6 @@ function auth_login_form(Page $page) {
 	// Heading and text
 	$page->heading(1, "Log in", "20pt");
 	$page->para("Enter your handle and password to log in to the Smash Hit Lab. Don't have an account? <a href=\"./?a=auth-register\">Create an account!</a>");
-	$page->para("Forgot your password? <a href=\"./?n=password-resets\">Learn about password resets</a>");
 	
 	// Add form
 	$page->add($form);
