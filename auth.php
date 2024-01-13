@@ -216,15 +216,9 @@ function auth_register_form(Page $page) {
 	
 	// Create the login form
 	$form = new Form("./?a=auth-register&submit=1");
-	//$form->set_container_type(FORM_CONTAINER_BLANK);
 	$form->textbox("handle", "Handle", "Pick a handle name that you would like. Please note that you can't change it later.");
-	// $form->textbox("email", "Email", "The email address you wish to assocaite with your account.");
+	$form->password("password", "Password", "Your password should be at least 12 characters long and be different from any other password you've used. If you leave this blank, a secure password will be generated for you.", "", true, true);
 	$form->day("birth", "Birthday", "Please enter your birthday so we can verify that you are old enough to join the Smash Hit Lab.");
-	$form->container("Password", "A special string of characters you need in order to log in to your account.", "
-			<ul>
-				<li>We will generate a secure password and send it to your email. You do not need to worry about choosing a password.</li>
-				<li>We recommend using some kind of password manager &mdash; preferably locally stored &mdash; to store your password as it will be long and random.</li>
-			</ul>");
 	$form->container("Terms", "Terms help protect us from each other and set standards on how we should behave.", "
 			<p>When you sign up for an account, you agree to the following documents:</p>
 			<ul>
@@ -232,12 +226,7 @@ function auth_register_form(Page $page) {
 				<li><a href=\"./?p=privacy\">Privacy Policy</a></li>
 				<li><a href=\"./?p=disclaimer\">General Disclaimers</a></li>
 			</ul>
-			<p>Most importantly:</p>
-			<ul>
-				<li>You need to be 16 or older in order to use the Smash Hit Lab. We will remove your account if we find that you are under 16 years old.</li>
-				<li>We do not provide warranty or support unless required by law, and we shouldn't be held liable for damages related to the site unless required by law.</li>
-				<li>We can update the terms of our contracts at any time and force you to stop using our services if you disagree with the new terms.</li>
-			</ul>");
+			<p>You need to be 16 or older in order to use the Smash Hit Lab. We will remove your account if we find that you are under 16 years old.</p>");
 	$form->submit("Create account");
 	
 	$page->force_bs();
@@ -306,7 +295,22 @@ function auth_register_action(Page $page) {
 	}
 	
 	// Generate the new password
-	$password = $user->new_password();
+	$password = $page->get("password", false, 72, SANITISE_NONE);
+	
+	if ($password) {
+		if ($password !== $page->get("password2", false, 72, SANITISE_NONE)) {
+			$page->info("Invalid password", "Your passwords do not match. Please go back and try typing your passwords again!");
+		}
+		
+		if (strlen($password) < 12) {
+			$page->info("Invalid password", "Your password is too short! Your password should be at least 12 characters long.");
+		}
+		
+		$user->set_password($password);
+	}
+	else {
+		$password = $user->new_password();
+	}
 	
 	// Password email
 	// Yes there is a more readable version of this available as the original
@@ -337,7 +341,10 @@ function auth_register_action(Page $page) {
 		$page->info("Account created!", "We sent an email to $email that contains your username and password.</p><p>");
 	}
 	else {
-		$page->info("Account created!", "Your account was created successfully!</p><p>Your password is: " . htmlspecialchars($password));
+		$page->info("Account created!", "Your account was created successfully!</p>
+		<p>Your handle is: <code>$user->name</code></p>
+		<p>Your password is: <code style=\"background: #000; color: #000;\">" . htmlspecialchars($password) . "</code> (select to reveal)</p>
+		<p>If you think you may forget these, please consider using a password manager like <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://keepassxc.org/\">KeePassXC</a>!</p>");
 	}
 }
 
@@ -418,8 +425,4 @@ $gEndMan->add("login", function (Page $page) {
 
 $gEndMan->add("register", function (Page $page) {
 	$page->redirect("./?a=auth-register");
-});
-
-$gEndMan->add("logout", function (Page $page) {
-	$page->redirect("./?a=auth-logout");
 });

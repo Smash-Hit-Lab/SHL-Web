@@ -63,9 +63,13 @@ class Form {
 		$this->container($title, $desc, $data);
 	}
 	
-	function password(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
+	function password(string $name, string $title, string $desc, string $value = "", bool $enabled = true, bool $twice = false) {
 		$s = ($enabled) ? "" : " readonly";
 		$data = "<input class=\"form-control\" type=\"password\" name=\"$name\" placeholder=\"$title\" value=\"$value\" $s/>";
+		
+		if ($twice) {
+			$data .= "<input class=\"form-control\" type=\"password\" name=\"$name"."2\" placeholder=\"$title (type again)\" value=\"$value\" $s/>";
+		}
 		
 		$this->container($title, $desc, $data);
 	}
