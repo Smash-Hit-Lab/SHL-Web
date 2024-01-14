@@ -645,7 +645,7 @@ class User {
 		 * @return False on failure, true on success
 		 */
 		
-		$this->password = password_hash($password, PASSWORD_ARGON2I);
+		$this->password = password_hash($password, PASSWORD_ARGON2ID);
 		
 		return true;
 	}
@@ -671,6 +671,8 @@ class User {
 		/**
 		 * Authorise a password reset for this user
 		 */
+		
+		die();
 		
 		$this->pw_reset = random_base64(100);
 		
@@ -704,7 +706,7 @@ class User {
 		$this->email = $email;
 	}
 	
-	function authinticate(string $password) : bool {
+	function authenticate(string $password) : bool {
 		/**
 		 * Check the stored password against the given password.
 		 */
@@ -758,7 +760,7 @@ class User {
 		$this->clean_foreign_tokens();
 		
 		// Check the password
-		if (!$this->authinticate($password)) {
+		if (!$this->authenticate($password)) {
 			return null;
 		}
 		
@@ -1164,6 +1166,9 @@ $gEndMan->add("account-edit", function (Page $page) {
 			$form->submit("Save account info");
 			
 			$page->add($form);
+			
+			$page->heading(2, "Change your password");
+			$page->add("<p>If you would like to change your password, this can happen here. If you think your account has been hacked please contact staff.</p><p><a href=\"./?a=account-change-password\"><button class=\"btn btn-outline-primary\">Change password</button></a></p>");
 			
 			$page->heading(2, "Download your data");
 			$page->para("At the moment we must manually collect the data we store about you. Firstly, make sure you set an email above. Then please send an email to <a href=\"mailto:cddepppp256@gmail.com\">cddepppp256@gmail.com</a>.");
@@ -1595,7 +1600,7 @@ function account_delete() {
 			$reason = $page->get("reason");
 			
 			// Send alert
-			alert("User account $user->name was deleted: $reason");
+			alert("User account @$user->name was deleted: $reason");
 			
 			// Delete the account
 			$user->delete();
@@ -1603,7 +1608,7 @@ function account_delete() {
 			// Show the final page ;(
 			include_header();
 			echo "<h1>Account deleted</h1>";
-			echo "<p>Your account has been deleted. Maybe we will see you again? TwT</p>";
+			echo "<p>Your account has been deleted. Goodbye.</p>";
 			include_footer();
 		}
 	}
@@ -1611,6 +1616,59 @@ function account_delete() {
 		sorry("The action you have requested is not currently implemented.");
 	}
 }
+
+$gEndMan->add("account-change-password", function (Page $page) {
+	$user = user_get_current();
+	
+	$page->force_bs();
+	
+	if ($user) {
+		if (!$page->has("submit")) {
+			$page->title("Change your password");
+			$page->heading(1, "Change your password");
+			
+			$form = new Form("./?a=account-change-password&submit=1");
+			$form->password("oldpassword", "Old password", "Type your old password so we can verify it is you preforming this action.");
+			$form->password("newpassword", "New password", "Your new password should be at least 12 characters long and be different from any other password you've used. If you leave this blank, a secure password will be generated for you.", "", true, true);
+			$form->submit("Change password");
+			
+			$page->add($form);
+		}
+		else {
+			$page->csrf($user);
+			
+			if (!$user->authenticate($page->get("oldpassword"))) {
+				$page->info("Sorry", "The old password is not correct. Please try again.");
+			}
+			
+			$newpassword = $page->get("newpassword", false, 72, SANITISE_NONE);
+			$newpwvalid = strlen($newpassword) >= 12 || strlen($newpassword) == 0;
+			
+			if ($newpassword === $page->get("newpassword2", false, 72, SANITISE_NONE) && $newpwvalid) {
+				// New according to what the user wants
+				if ($newpassword) {
+					$user->set_password($newpassword);
+					$page->add("<h1>Success</h1><p>Your password has been changed!</p>");
+				}
+				// New random password
+				else {
+					$password = $user->new_password();
+					$page->add("<h1>Success</h1><p>Your password has been changed!</p><p>New password: <code style=\"background: #000; color: #000;\">" . htmlspecialchars($password) . "</code> (select to reveal)</p>");
+				}
+				
+				$user->save();
+				
+				alert("User @$user->name changed their password.");
+			}
+			else {
+				$page->info("Sorry", "The new passwords do not match or is too short.");
+			}
+		}
+	}
+	else {
+		$page->info("Sorry", "You need to be logged in to reset your password.");
+	}
+});
 
 /**
  * Welcome message after user has registered.

@@ -192,7 +192,7 @@ class Page {
 	
 	function csrf(User $user) {
 		if (!$user->verify_sak($this->get("key"))) {
-			$this->info("CSRF attack detected", "A CSRF attack was detected. If you encoutered this while trying to use the site normally, please report this issue to staff.");
+			$this->info("CSRF key is invalid", "The CSRF key is invalid. Try going back and refreshing the page, then performing the action again.");
 		}
 	}
 	
