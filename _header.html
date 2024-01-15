@@ -154,8 +154,6 @@
 					<?php
 						$user_name = get_name_if_authed();
 						
-						
-						
 						if ($user_name) {
 							display_notification_charm($user_name);
 							
@@ -164,23 +162,22 @@
 							
 							echo "<div class=\"cb-top-item\">";
 							echo "<div class=\"shl-old-profile-dropdown-button\">";
-							echo "<img class=\"navbar-profile\" src=\"$image\"/>";
-							echo "<div class=\"shl-old-profile-dropdown-main right\">";
-							
-							nav_dropdown_item("account_circle", "Profile", "/@$user_name");
-							if ($u->is_admin()) {
-								nav_dropdown_item("apps", "Dashboard", "/?a=admin_dashboard");
-							}
-							// nav_dropdown_item("manage_accounts", "Account", "/?a=edit_account");
-							nav_dropdown_item("notifications", "Notifications", "/?a=notifications");
-							if (!$u->has_role("impersonateable")) {
-								nav_dropdown_item("logout", "Logout", "/?a=logout");
-							}
-							else {
-								nav_dropdown_item("logout", "Switch back", "/?a=admin-return");
-							}
-							
-							echo "</div>";
+							echo "<a href=\"./@$user_name\"><img class=\"navbar-profile\" src=\"$image\"/></a>";
+// 							echo "<div class=\"shl-old-profile-dropdown-main right\">";
+// 							
+// 							nav_dropdown_item("account_circle", "Profile", "/@$user_name");
+// 							if ($u->is_admin()) {
+// 								nav_dropdown_item("apps", "Dashboard", "/?a=admin_dashboard");
+// 							}
+// 							nav_dropdown_item("notifications", "Notifications", "/?a=notifications");
+// 							if (!$u->has_role("impersonateable")) {
+// 								nav_dropdown_item("logout", "Logout", "/?a=logout");
+// 							}
+// 							else {
+// 								nav_dropdown_item("logout", "Switch back", "/?a=admin-return");
+// 							}
+// 							
+// 							echo "</div>";
 							echo "</div>";
 							echo "</div>";
 						} else {

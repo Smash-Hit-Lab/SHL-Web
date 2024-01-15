@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html id="shl-html">
 	<head>
 		<meta charset="utf-8">
 		<meta name="description" content="<?php if (isset($gTitle)) { echo $gTitle; } else { echo 'View this page on the Smash Hit Lab!'; } ?>">
@@ -59,6 +59,16 @@
 			display: inline-block;
 			overflow: hidden;
 			border: 1px solid transparent;
+			box-sizing: content-box;
+		}
+		
+		.mod-card-outer:hover {
+			background: #8884;
+		}
+		
+		.mod-card-link {
+			color: var(--bs-body-color);
+			text-decoration-line: none;
 		}
 
 		.mod-card-image {

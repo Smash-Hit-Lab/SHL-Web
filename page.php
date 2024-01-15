@@ -299,13 +299,13 @@ class Page {
 	function send() : void {
 		if ($this->mode === PAGE_MODE_HTML) {
 			global $gTitle; $gTitle = $this->title;
-			include_header($this->forceBS);
+			include_header(true);
 		}
 		
 		echo $this->render();
 		
 		if ($this->mode === PAGE_MODE_HTML) {
-			include_footer($this->forceBS);
+			include_footer(true);
 		}
 		
 		die();

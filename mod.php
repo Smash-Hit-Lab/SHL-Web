@@ -69,7 +69,7 @@ class ModPage {
 			
 			// Update discussions URL
 			$disc = new Discussion($this->reviews);
-			$disc->set_url("./?m=$this->package");
+			$disc->set_url("./~$this->package");
 		}
 		else {
 			$this->package = $package;
@@ -235,7 +235,7 @@ class ModPage {
 		echo "<script>shl_magic_editor_init();</script>";
 		
 		$disc = new Discussion($this->reviews);
-		$disc->display_reverse("Reviews", "./?m=" . $this->package);
+		$disc->display_reverse("Reviews", "./~" . $this->package);
 		
 		if ($this->colour) {
 			echo render_accent_script($this->colour);
@@ -253,7 +253,7 @@ class ModPage {
 		for ($i = (sizeof($history) - 1); $i >= 0; $i--) {
 			$rev = $history[$i];
 			
-			echo "<li><a href=\"./?m=$this->package&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./@$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
+			echo "<li><a href=\"./~$this->package&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./@$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
 		}
 		
 		echo "</ul>";
@@ -434,17 +434,17 @@ $gEndMan->add("mod-view", function (Page $page) {
 	$download_content = "";
 	
 	if (!str_starts_with($mod->download, "http")) {
-		$download_content = $mod->download;
+		$download_content = "<p>$mod->download</p>";
 		
 		if (!$download_content) {
-			$download_content = "<i>No download is available!</i>";
+			$download_content = "<p><i>No download is available!</i></p>";
 		}
 	}
 	else if (!$stalker && (time() - $mod->created) < (60 * 60 * 24 * 3)) {
 		$download_content = "<div class=\"thread-card\">
 		<p><b>You need an account to view this info.</b></p>
 		<p>To prevent spam, mods created in the last 3 days cannot be downloaded by users without an account. Please create an account or come back soon!</p>
-		<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
+		<p><a href=\"./?a=auth-login\"><button>Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\">Register</button></a></p>
 	</div>";
 	}
 	else {
@@ -505,19 +505,11 @@ $gEndMan->add("mod-view", function (Page $page) {
 	// Reviews
 	$page->add("<div class=\"tab-pane fade\" id=\"nav-reviews\" role=\"tabpanel\" aria-labelledby=\"nav-reviews-tab\" tabindex=\"0\">");
 	$disc = new Discussion($mod->reviews);
-	$page->add($disc->render_reverse("Reviews", "./?m=" . $mod->package));
+	$page->add($disc->render_reverse("Reviews", "./~" . $mod->package));
 	$page->add("</div>");
 	
 	// End of tabbed area
 	$page->add("</div>");
-	
-	// mod_property("Download", "A link to where the mod can be downloaded.", $download_content, true);
-	// mod_property("Version", "The latest version of this mod.", $mod->version, true);
-	// mod_property("Creators", "The people who created this mod.", $creators_content, true);
-	
-	// mod_property("Wiki article", "A relevant wiki article about the mod.", $mod->wiki, true);
-	// mod_property("Source code", "A link to where the source code for a mod can be found.", $mod->code, true);
-	// mod_property("Status", "A short description of the mod's development status.", $mod->status, true);
 });
 
 function display_mod() {
@@ -621,9 +613,9 @@ function save_mod() : void {
 	$mod->save_edit($user);
 	
 	// Admin alert!
-	alert("Mod page $mod_name updated by @$user\nUsed legacy editor\nReason: $mod->reason", "./?m=$mod_name");
+	alert("Mod page $mod_name updated by @$user\nUsed legacy editor\nReason: $mod->reason", "./~$mod_name");
 	
-	redirect("./?m=$mod_name");
+	redirect("./~$mod_name");
 }
 
 $gEndMan->add("mod-save", function (Page $page) {
@@ -643,7 +635,7 @@ $gEndMan->add("mod-save", function (Page $page) {
     	$mod = new ModPage($data["page"]);
     	$mod->save_edit_api($page, $user, $data);
     	
-    	alert("Mod page #$mod->package updated by @$user\nUsed magic editor", "./?m=$mod->package");
+    	alert("Mod page #$mod->package updated by @$user\nUsed magic editor", "./~$mod->package");
     	
     	$page->set("status", "done");
     	$page->set("message", "The changes were saved successfully!");
@@ -702,20 +694,19 @@ $gEndMan->add("mod-list", function (Page $page) {
 	
 	$page->title("List of mods");
 	
-	$page->add( "<h1>List of Mods</h1>" );
+	$page->heading(1, "List of Mods" );
 	
 	// Make mod modual
-	if (get_name_if_authed()) {
+	if ($actor) {
 		$page->addFromFile('../../data/_mkmod.html');
 	}
-	
 	// Join message
-	if (!$actor) {
-		$page->add( "<div class=\"thread-card\">
+	else {
+		$page->add( "<div class=\"card thread-card\"><div class=\"card-body\">
 			<p><b>Want to add your mod here?</b></p>
 			<p>Log in or create an account to add your mod to the database.</p>
-			<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
-		</div>" );
+			<p class=\"card-text\"><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
+		</div></div>" );
 	}
 	
 	// Grid of mods
@@ -735,12 +726,12 @@ $gEndMan->add("mod-list", function (Page $page) {
 			$desc = $desc . "...";
 		}
 		
-		$url = "./?m=" . urlencode($mp->package);
+		$url = "./~" . urlencode($mp->package);
 		$img = $mp->image ? $mp->image : "./?a=generate-logo-coloured&seed=$title";
 		
 		$page->add("
 		<div class=\"mod-card-outer\">
-			<a href=\"$url\">
+			<a class=\"mod-card-link\" href=\"$url\">
 			<div class=\"mod-card-image\" style=\"background-image: url('$img');\"></div>
 			<div class=\"mod-card-data\">
 				<h4>$title</h4>
@@ -777,8 +768,8 @@ $gEndMan->add("mod-rename", function(Page $page) {
 			$result = $mod->rename($new_slug);
 			
 			if ($result) {
-				alert("@$user renamed mod page '$old_slug' to '$new_slug'", "./?m=$new_slug");
-				$page->redirect("./?m=$new_slug");
+				alert("@$user renamed mod page '$old_slug' to '$new_slug'", "./~$new_slug");
+				$page->redirect("./~$new_slug");
 			}
 			else {
 				$page->info("Something happened", "A page with this name already exists.");

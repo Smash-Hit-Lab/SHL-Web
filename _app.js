@@ -116,7 +116,31 @@ function shl_button_fixup() {
 // 	}
 }
 
+function shl_set_theme(theme) {
+	console.log("shl_set_theme:", theme);
+	let el = document.getElementById("shl-html");
+	el.setAttribute("data-bs-theme", theme);
+}
+
+function shl_setup_theme() {
+	// Setup now
+	if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+		shl_set_theme("dark");
+	}
+	
+	// Setup for changes
+	window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+		if (e.matches) {
+			shl_set_theme("dark");
+		}
+		else {
+			shl_set_theme("light");
+		}
+	});
+}
+
 function shl_main() {
 	console.log("_app.js loaded v2");
+	shl_setup_theme();
 	shl_button_fixup();
 }

@@ -14,9 +14,9 @@
 		e.style.display = "none";
 	}
 </script>
-<p style="text-align: center;"><button onclick="show_dialogue()"><span class="material-icons" style="position: relative; top: 5px; margin-right: 3px;">add</span> Create new mod entry</button></p>
+<p><button class="btn btn-primary" onclick="show_dialogue()">Create new mod entry</button></p>
 <div id="mod-page-new-dialogue-container" class="dialogue-bg" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000c; z-index: 1000;">
-	<div class="dialogue-surface" style="position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(50vw, 20em); height: 80vh; background: var(--colour-background); border-radius: 0.5em; box-shadow: 0 0.3em 0.4em var(--colour-background-dark-b); padding: 1.0em;">
+	<div class="card dialogue-surface" style="position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(50vw, 20em); height: 80vh; background: #fff; border-radius: 0.5em; box-shadow: 0 0.3em 0.4em var(--colour-background-dark-b); padding: 1.0em;"><div class="card-body">
 		<div class="dialogue-seperation" style="display: grid; grid-template-rows: 3em auto 3em; height: 100%;">
 			<div style="grid-row: 1; margin-bottom: 3em;">
 				<h4>Create a new entry for your mod</h4>
@@ -25,7 +25,7 @@
 				<p><b>What would you like the internal name (slug) of your mod's page to be?</b></p>
 				<p>This is different from the mod's title, and should preferably contain only lowercase and uppercase latin characters, numbers and dots, dashes and underscores.</p>
 				<p>If you have changed your mod's package name to something unique, we recommend using that as the slug.</p>
-				<input id="create-mod" type="text" placeholder="Internal page name"/>
+				<input id="create-mod" class="form-control" type="text" placeholder="Internal page name"/>
 			</div>
 			<div style="grid-row: 3;">
 				<div style="display: grid; grid-template-columns: auto auto;">
@@ -38,5 +38,5 @@
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
+	</div></div>
+</div><!--</div>-->
