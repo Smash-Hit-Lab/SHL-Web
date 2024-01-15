@@ -84,7 +84,7 @@ function do_admin_dashboard() {
 	$user = get_name_if_admin_authed();
 	
 	if ($user) {
-		include_header();
+		include_header(true);
 		echo "<h1>Admin dashboard</h1>";
 		
 		echo "<h3>Actions</h3>";
@@ -112,7 +112,7 @@ function do_admin_dashboard() {
 		admin_action_item("./?a=forum-rename", "edit", "Rename thread");
 		admin_action_item("./?a=forum-delete", "delete", "Delete thread");
 		
-		include_footer();
+		include_footer(true);
 	}
 	else {
 		sorry("The action you have requested is not currently implemented.");
