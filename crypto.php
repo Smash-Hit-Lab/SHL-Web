@@ -43,3 +43,7 @@ function random_password() : string {
 	
 	return $pw;
 }
+
+function sha256(string $data) : string {
+	return hash("sha256", $data);
+}
