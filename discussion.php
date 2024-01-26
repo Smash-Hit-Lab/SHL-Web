@@ -408,11 +408,11 @@ class Discussion {
 					$img = "./icon.png";
 				}
 				
-				$base .= "<div id=\"discussion-$this->id-box\" class=\"card comment-card comment-edit\"><div class=\"card-body\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p>@$name</p><p><textarea id=\"discussions-$this->id-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
+				$base .= "<li class=\"list-group-item\"><div id=\"discussion-$this->id-box\" class=\"comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p>@$name</p><p><textarea id=\"discussions-$this->id-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
 				
-				$base .= "<button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button>";
+				$base .= "<p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p><p><button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button></p>";
 				
-				$base .= "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div></div><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p>";
+				$base .= "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div></li>";
 				break;
 			}
 			case "closed": {
@@ -431,17 +431,11 @@ class Discussion {
 		return $base;
 	}
 	
-	function render_title(string $title) {
-		return "<h3 class=\"left-align\" style=\"margin-top: 0; position: relative; top: -10px;\">$title (" . $this->enumerate_shown() . ")</h3>";
-	}
-	
 	function render_reload() {
 		$base = "";
 		
-		$base .= "<button class=\"button secondary\" onclick=\"ds_clear(); ds_load();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">refresh</span> Reload</button>";
-		
 		if (get_name_if_mod_authed()) {
-			$base .= " <button class=\"button secondary\" onclick=\"ds_toggle_hidden();\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">visibility_off</span> Hidden</button>";
+			$base .= " <button class=\"btn btn-outline-primary\" onclick=\"ds_toggle_hidden();\">Hidden</button>";
 		}
 		
 		return $base;
@@ -454,10 +448,10 @@ class Discussion {
 			$following = $this->is_following($name);
 			
 			$follow = ($following) ? "Unfollow" : "Follow";
-			$secondary = ($following) ? " secondary" : "";
+			$secondary = ($following) ? "btn-outline-primary" : "btn-primary";
 			$url = $_SERVER['REQUEST_URI'];
 			
-			return "<a href=\"./?a=discussion_follow&id=$this->id&after=$url\"><button class=\"button$secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">notification_add</span> $follow</button></a>";
+			return "<a href=\"./?a=discussion_follow&id=$this->id&after=$url\"><button class=\"btn $secondary\">$follow</button></a>";
 		}
 		
 		return "";
@@ -472,29 +466,10 @@ class Discussion {
 			$text = ($locked) ? "Unlock" : "Lock";
 			$url = $_SERVER['REQUEST_URI'];
 			
-			return "<a href=\"./?a=discussion_lock&id=$this->id&after=$url\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">lock</span> $text</button></a>";
+			return "<a href=\"./?a=discussion_lock&id=$this->id&after=$url\"><button class=\"btn btn-outline-primary\">$text</button></a>";
 		}
 		
 		return "";
-	}
-	
-	function render_bar(string $title) : string {
-		$base = "";
-		
-		$base .= "<div class=\"comments-header\">";
-			$base .= "<div class=\"comments-header-label\">";
-				$base .= $this->render_title($title);
-			$base .= "</div>";
-			$base .= "<div class=\"comments-header-data right-align\"><p>";
-				$base .= $this->render_reload();
-				$base .= " ";
-				$base .= $this->render_lock();
-				$base .= " ";
-				$base .= $this->render_follow();
-			$base .= "</p></div>";
-		$base .= "</div>";
-		
-		return $base;
 	}
 	
 	function render_comments(bool $reverse = false) {
@@ -520,17 +495,38 @@ class Discussion {
 		return "<script>var DiscussionID = \"$this->id\"; var UserSAK = \"$sak\"; var DiscussionBackwards = " . ($backwards ? "true" : "false") . "; var ShowHidden = false;</script>" . file_get_contents("../../data/_discussionload.html");
 	}
 	
+	function render_start(string $title) {
+		$base = "<div class=\"card\"><div class=\"card-header d-flex justify-content-between align-items-center\"><span><b>$title</b> " . $this->enumerate_shown() . "</span>";
+		
+		$base .= "<span>";
+		$base .= $this->render_reload();
+		$base .= " ";
+		$base .= $this->render_lock();
+		$base .= " ";
+		$base .= $this->render_follow();
+		$base .= "</span>";
+		
+		$base .= "</div><ul id=\"shl-discussion-$this->id-item-list\" class=\"list-group list-group-flush\">";
+		
+		return $base;
+	}
+	
+	function render_end() {
+		return "</ul></div>";
+	}
+	
 	function render(string $title = "Discussion", string $url = "") : string {
 		$base = "";
 		
 		$base .= $this->comments_load_script();
-		$base .= $this->render_bar($title);
+		$base .= $this->render_start($title);
 		if ($this->is_disabled()) {
 			$base .= $this->render_disabled();
 			return $base;
 		}
 		$base .= $this->render_comments();
 		$base .= $this->render_edit(-1, $url);
+		$base .= $this->render_end();
 		
 		return $base;
 	}
@@ -539,13 +535,14 @@ class Discussion {
 		$base = "";
 		
 		$base .= $this->comments_load_script(true);
-		$base .= $this->render_bar($title);
+		$base .= $this->render_start($title);
 		if ($this->is_disabled()) {
 			$base .= $this->render_disabled();
 			return $base;
 		}
 		$base .= $this->render_edit(-1, $url);
 		$base .= $this->render_comments(true);
+		$base .= $this->render_end();
 		
 		return $base;
 	}

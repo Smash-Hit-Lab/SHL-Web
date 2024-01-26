@@ -56,7 +56,7 @@
 	}
 	
 	function ds_render_comment(hidden, image, author, display, time, body, actions, index, badge, pronouns) {
-		return "<div class=\"card comment-card\" " + (hidden ? "style=\"opacity: 0.6;\"" : "") + " style=\"margin-bottom: 10px;\"><div class=\"card-body\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./@" + author + "\">" + display + "</a> · @" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div></div>";
+		return "<li class=\"list-group-item shl-discussion-item\"><div " + (hidden ? "style=\"opacity: 0.6;\"" : "") + "><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./@" + author + "\">" + display + "</a> · @" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div></li>";
 	}
 	
 	function ds_load_handle() {
@@ -64,13 +64,14 @@
 			return;
 		}
 		
-		let discussion = document.getElementById("discussion-" + DiscussionID);
+		let discussion = document.getElementById("shl-discussion-" + DiscussionID + "-item-list");
 		
 		switch (this.status) {
 			case 200: {
 				let data = JSON.parse(this.responseText);
 				
-				discussion.innerHTML = "";
+				// discussion.innerHTML = "";
+				ds_clear();
 				
 				for (let i = 0; i < data["comments"].length; i++) {
 					let comment = data["comments"][(DiscussionBackwards ? (data["comments"].length - i - 1) : i)];
@@ -98,8 +99,14 @@
 	}
 	
 	function ds_clear() {
-		let discussion = document.getElementById("discussion-" + DiscussionID);
-		discussion.innerHTML = "<p style=\"text-align: center;\"><i>Discussions are loading...</i></p>";
+		//let discussion = document.getElementById("discussion-" + DiscussionID);
+		//discussion.innerHTML = "<p style=\"text-align: center;\"><i>Discussions are loading...</i></p>";
+		
+		let els = document.getElementsByClassName("shl-discussion-item");
+		
+		for (let i = 0; i < els.length; i++) {
+			els[i].remove();
+		}
 	}
 	
 	function ds_add_reply(user) {
