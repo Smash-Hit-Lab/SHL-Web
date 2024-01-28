@@ -44,8 +44,6 @@ function handle_action(string $action, Page $page) {
 		case "mod_history": mod_history(); break;
 		case "mod_delete":
 		case "delete_mod": delete_mod(); break;
-	// ---- MORE USER ACCOUNT STUFF ---- //
-		case "account_delete": account_delete(); break;
 	// ---- DISCUSSIONS ---- //
 		case "discussion_update": discussion_update(); break;
 		case "discussion_hide": discussion_hide(); break;

@@ -1174,7 +1174,7 @@ $gEndMan->add("account-edit", function (Page $page) {
 			$page->para("At the moment we must manually collect the data we store about you. Firstly, make sure you set an email above. Then please send an email to <a href=\"mailto:cddepppp256@gmail.com\">cddepppp256@gmail.com</a>.");
 			
 			$page->heading(2, "Delete your account");
-			$page->add("<p>If you would like to delete your account and associated data, you can start by clicking the button. <b>This action cannot be undone!</b></p><p><a href=\"./?a=account_delete\"><button class=\"btn btn-danger\">Delete account</button></a></p>");
+			$page->add("<p>If you would like to delete your account and associated data, you can start by clicking the button. <b>This action cannot be undone!</b></p><p><a href=\"./?a=account-delete\"><button class=\"btn btn-danger\">Delete account</button></a></p>");
 		}
 		else {
 			$user = user_get_current();
@@ -1563,41 +1563,45 @@ function user_verify() {
 	}
 }
 
-function account_delete() {
-	$user = get_name_if_authed();
+$gEndMan->add("account-delete", function (Page $page) {
+	$user = user_get_current();
 	
 	if ($user) {
-		$user = new User($user);
-		
 		if (!array_key_exists("submit", $_GET)) {
-			include_header();
+			$page->heading(1, "Delete your account");
 			
-			echo "<h1>Delete your account</h1>";
+			$form = new Form("./?a=account-delete&submit=1");
 			
-			form_start("./?a=account_delete&submit=1");
+			$form->textbox("reason", "Reason", "You can optionally provide us a short reason for deleteing your account.", "");
+			$form->select(
+				"understand",
+				"Acknowledgement",
+				"<b>By deleting your account, you agree that your data will be deleted forever, and that there is no possible way we can recover it.</b>",
+				[
+					"0" => "No, I don't understand",
+					"1" => "Yes, I understand"
+				],
+				"0"
+			);
 			
-			edit_feild("reason", "Reason", "You can optionally provide us a short reason for deleteing your account.", "");
-			edit_feild("understand", "select", "Acknowledgement", "<b>By deleting your account, you agree that your data will be deleted forever, and that there is no possible way we can recover it.</b>", "0", true, array("0" => "No, I don't understand", "1" => "Yes, I understand"));
-			
-			form_end("Delete my account");
-			
-			include_footer();
+			$form->submit("Delete my account");
+			$page->add($form);
 		}
 		else {
+			$page->csrf($user);
+			
 			// Must accept agreement
-			if (!$_POST["understand"]) {
+			if (!$page->get("understand")) {
 				sorry("You must agree to the acknowledgement in order to delete your account.");
 			}
 			
 			// Must not be admin
-			if ($user->is_admin()) {
-				sorry("Staff accounts cannot be deleted.");
+			if ($user->is_mod()) {
+				sorry("Staff accounts cannot be deleted without first being demoted.");
 			}
 			
-			// Validate the length
-			validate_length("Reason", $_POST["reason"], 50);
-			
-			$reason = $page->get("reason");
+			// Get the reason
+			$reason = $page->get("reason", false, 500);
 			
 			// Send alert
 			alert("User account @$user->name was deleted: $reason");
@@ -1606,16 +1610,14 @@ function account_delete() {
 			$user->delete();
 			
 			// Show the final page ;(
-			include_header();
-			echo "<h1>Account deleted</h1>";
-			echo "<p>Your account has been deleted. Goodbye.</p>";
-			include_footer();
+			$page->add("<h1>Account deleted</h1>");
+			$page->add("<p>Your account has been deleted. Goodbye!</p>");
 		}
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("Error!", "You need to log in to delete your account!");
 	}
-}
+});
 
 $gEndMan->add("account-change-password", function (Page $page) {
 	$user = user_get_current();
