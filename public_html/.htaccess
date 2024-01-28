@@ -1,0 +1,16 @@
+
+# HTID:21070390: DO NOT REMOVE OR MODIFY THIS LINE AND THE LINES BELOW
+php_value display_errors 1
+# DO NOT REMOVE OR MODIFY THIS LINE AND THE LINES ABOVE HTID:21070390:
+
+
+RewriteEngine on
+RewriteRule "^\/?lab\/\@(.*)$" "/lab/index.php?a=user-view&handle=$1"
+RewriteRule "^\/?lab\/\~(.*)$" "/lab/index.php?a=mod-view&id=$1"
+RewriteRule "^\/?lab\/\!(.*)$" "/lab/index.php?n=$1"
+RewriteRule "^\/?lab\/\:(.*)$" "/lab/index.php?a=$1"
+
+#AuthType basic
+#AuthName "Smash Hit Lab"
+#AuthUserFile /storage/ssd1/639/20150639/.htpasswd
+#Require valid-user
