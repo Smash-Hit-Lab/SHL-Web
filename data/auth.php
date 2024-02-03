@@ -146,19 +146,31 @@ function auth_login_action(Page $page) {
 		$page->info("Sorry!", "Something went wrong while logging in. Make sure your username and password are correct, then try again.");
 	}
 	
+	// Make token id and lockbox
+	$tk = $token->get_id();
+	$lb = $token->make_lockbox();
+	
 	// We should be able to log the user in
-	$page->cookie("tk", $token->get_id(), 60 * 60 * 24 * 14);
-	$page->cookie("lb", $token->make_lockbox(), 60 * 60 * 24 * 14);
-	
-	// Final event for login
-	$gEvents->trigger("user.login.after", $page);
-	
-	// Redirect to user page
-	if ($page->has("redirect")) {
-		$page->redirect($page->get("redirect"));
+	if (!$page->has("api")) {
+		$page->cookie("tk", $tk, 60 * 60 * 24 * 14);
+		$page->cookie("lb", $lb, 60 * 60 * 24 * 14);
+		
+		// Redirect to user page
+		if ($page->has("redirect")) {
+			$page->redirect($page->get("redirect"));
+		}
+		else {
+			$page->redirect("./@$handle");
+		}
 	}
 	else {
-		$page->redirect("./@$handle");
+		$page->set_mode(PAGE_MODE_API);
+		$page->set("status", "done");
+		$page->set("message", "Logged in successfully.");
+		$page->set("tk", $tk);
+		$page->set("lb", $lb);
+		$page->set("cl", hash_hmac("sha256", "$tk:$lb", get_config("cl_hmac_key")));
+		$page->set("vt", time() + 60 * 60 * 24 * 14);
 	}
 }
 

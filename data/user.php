@@ -1672,6 +1672,20 @@ $gEndMan->add("account-change-password", function (Page $page) {
 	}
 });
 
+$gEndMan->add("account-next-sak", function (Page $page) {
+	$page->set_mode(PAGE_MODE_API);
+	$user = user_get_current();
+	
+	if ($user) {
+		$page->set("status", "done");
+		$page->set("message", "Retrived new CSRF key successfully.");
+		$page->set("key", $user->get_sak());
+	}
+	else {
+		$page->info("not_authed", "The authentication token is not valid anymore or does not exist.");
+	}
+});
+
 /**
  * Welcome message after user has registered.
  */

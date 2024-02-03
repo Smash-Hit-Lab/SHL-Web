@@ -34,7 +34,7 @@ $gEndMan->add("kitsune-set", function (Page $page) {
 	}
 });
 
-$gEndMan->add("kitsune-get", function (Page $page)) {
+$gEndMan->add("kitsune-get", function (Page $page) {
 	/**
 	 * Accessing storage on a kitsune does not need auth.
 	 */
@@ -52,4 +52,4 @@ $gEndMan->add("kitsune-get", function (Page $page)) {
 	else {
 		$page->add("Not found");
 	}
-}
+});
