@@ -22,17 +22,14 @@ class ModPage {
 	public $package;
 	public $name;
 	public $creators;
-	public $wiki;
 	public $description;
 	public $download;
 	public $code;
-	public $tags;
 	public $version;
 	public $updated;
 	public $created;
 	public $author;
 	public $reason;
-	public $security;
 	public $reviews;
 	public $visibility;
 	
@@ -45,17 +42,14 @@ class ModPage {
 			$this->package = $mod->package;
 			$this->name = $mod->name;
 			$this->creators = $mod->creators;
-			$this->wiki = $mod->wiki;
 			$this->description = $mod->description;
 			$this->download = $mod->download;
 			$this->code = $mod->code;
-			$this->tags = $mod->tags;
 			$this->version = $mod->version;
 			$this->updated = $mod->updated;
 			$this->created = property_exists($mod, "created") ? $mod->created : time();
 			$this->author = property_exists($mod, "author") ? $mod->author : "";
 			$this->reason = property_exists($mod, "reason") ? $mod->reason : "";
-			$this->security = $mod->security;
 			$this->status = $mod->status;
 			$this->reviews = property_exists($mod, "reviews") ? $mod->reviews : random_discussion_name();
 			$this->image = property_exists($mod, "image") ? $mod->image : "";
@@ -75,17 +69,14 @@ class ModPage {
 			$this->package = $package;
 			$this->name = "Untitled Mod";
 			$this->creators = array();
-			$this->wiki = null;
 			$this->description = null;
 			$this->download = null;
 			$this->code = null;
-			$this->tags = array();
 			$this->version = null;
 			$this->updated = time();
 			$this->created = time();
 			$this->author = "";
 			$this->reason = "";
-			$this->security = "";
 			$this->status = "Released";
 			$this->reviews = random_discussion_name();
 			$this->image = "";
@@ -182,7 +173,7 @@ $gEndMan->add("mod-view", function (Page $page) {
 		
 		if (get_name_if_mod_authed()) {
 			$page->add("<a href=\"./?a=mod-rename&oldslug=$mod->package\"><button class=\"btn btn-outline-primary\">Rename</button></a> ");
-			$page->add("<a href=\"./?a=mod_delete&package=$mod->package\"><button class=\"btn btn-outline-danger\">Delete</button></a> ");
+			$page->add("<a href=\"./?a=mod-delete&id=$mod->package\"><button class=\"btn btn-outline-danger\">Delete</button></a> ");
 		}
 		
 		$page->add("</p>");
@@ -205,12 +196,11 @@ $gEndMan->add("mod-view", function (Page $page) {
 	// Download area
 	$download_content = "";
 	
-	if (!str_starts_with($mod->download, "http")) {
+	if (!$mod->download) {
+		$download_content = "<p><i>No download is available!</i></p>";
+	}
+	else if (!str_starts_with($mod->download, "http")) {
 		$download_content = "<p>$mod->download</p>";
-		
-		if (!$download_content) {
-			$download_content = "<p><i>No download is available!</i></p>";
-		}
 	}
 	else if (!$stalker && (time() - $mod->created) < (60 * 60 * 24 * 3)) {
 		$download_content = "<div class=\"thread-card\">
@@ -261,17 +251,33 @@ $gEndMan->add("mod-view", function (Page $page) {
 	// More
 	$page->add("<div class=\"tab-pane fade\" id=\"nav-more\" role=\"tabpanel\" aria-labelledby=\"nav-more-tab\" tabindex=\"0\">");
 	
-	$qiEntries = [["version", "Version"], ["wiki", "Wiki article"], ["code", "Source files"], ["status", "Status"]];
+	$qiEntries = [
+		["version", "Version", "s"],
+		["code", "Source files", "s"],
+		["status", "Status", "s"],
+		["created", "Created at", "t"],
+		["updated", "Updated at", "t"],
+		["author", "Updated by", "s"],
+	];
 	
 	for ($i = 0; $i < sizeof($qiEntries); $i++) {
 		$propname = $qiEntries[$i][0];
 		
 		if ($mod->$propname) {
-			$page->para("<b>" . $qiEntries[$i][1] . ":</b> " . $mod->$propname);
+			switch ($qiEntries[$i][2]) {
+				case "s": {
+					$page->para("<b>" . $qiEntries[$i][1] . ":</b> " . $mod->$propname);
+					break;
+				}
+				case "t": {
+					$page->para("<b>" . $qiEntries[$i][1] . ":</b> " . date("Y-m-d H:i", $mod->$propname));
+					break;
+				}
+			}
 		}
 	}
 	
-	$page->add("<p class=\"small-text\">This page was last updated at " . date("Y-m-d H:i", $mod->updated) . " by " . get_nice_display_name($mod->author) . "</p>");
+	// $page->add("<p class=\"small-text\">This page was last updated at " . date("Y-m-d H:i", $mod->updated) . " by " . get_nice_display_name($mod->author) . "</p>");
 	$page->add("</div>");
 	
 	// Reviews
@@ -311,6 +317,7 @@ $gEndMan->add("mod-edit", function (Page $page) {
 			}
 			
 			$form->textbox("download", "Download", "A link to where the mod can be downloaded.", $mod->download);
+			$form->textbox("code", "Source files", "An optional link to where the source files can be found.", $mod->code);
 			$form->textbox("version", "Version", "The latest version of this mod.", $mod->version);
 			$form->textbox("creators", "Creators", "People who will have premission to edit this mod's page and be credited with creating it.", create_comma_array($mod->creators));
 			
@@ -338,6 +345,7 @@ $gEndMan->add("mod-edit", function (Page $page) {
 			$mod->creators = parse_comma_array($page->get("creators", true, 1000));
 			$mod->description = $page->get("description", NOT_NIL, 4000, SANITISE_NONE); // Rich text feild
 			$mod->download = $page->get("download", NOT_NIL, 500);
+			$mod->code = $page->get("code", NOT_NIL, 500);
 			$mod->version = $page->get("version", NOT_NIL, 30);
 			$mod->updated = time();
 			$mod->author = $user->name;
@@ -365,48 +373,38 @@ $gEndMan->add("mod-edit", function (Page $page) {
 	}
 });
 
-function delete_mod() : void {
-	$user = get_name_if_mod_authed();
+$gEndMan->add("mod-delete", function (Page $page) {
+	$user = user_get_current();
 	
-	if ($user) {
-		if (!array_key_exists("page", $_POST)) {
-			include_header();
+	if ($user && $user->is_mod()) {
+		if (!$page->has("submit")) {
+			$page->add("<h1>Delete mod page</h1>");
 			
-			echo "<h1>Delete mod page</h1>";
+			$form = new Form("./?a=mod-delete&submit=1");
+			$form->textbox("id", "Page name", "The name of the page to delete. This is the same as the mod's package name.", $page->get("id"), false);
+			$form->textbox("reason", "Reason", "Type a short reason that you would like to delete this page.", "");
+			$form->submit("Delete page");
 			
-			$default = false;
-			
-			if (array_key_exists("package", $_GET)) {
-				$default = $_GET["package"];
-			}
-			
-			form_start("./?a=delete_mod");
-			edit_feild("page", "text", "Page name", "The name of the page to delete. This is the same as the mod's package name.", $default, !$default);
-			edit_feild("reason", "text", "Reason", "Type a short reason that you would like to delete this page (optional).", "");
-			form_end("Delete mod page");
-			
-			include_footer();
+			$page->add($form);
 		}
 		else {
-			$mod = htmlspecialchars($_POST["page"]);
-			$reason = htmlspecialchars($_POST["reason"]);
+			$page->csrf($user);
 			
-			if (!$reason) { $reason = "<i>No reason given</i>"; }
+			$mod = $page->get("id", true, 30);
+			$reason = $page->get("reason", NOT_NIL, 300);
 			
 			$mod = new ModPage($mod);
 			$mod->delete();
 			
 			alert("Mod page $mod->package deleted by @$user\n\nReason: $reason");
 			
-			include_header();
-			echo "<h1>Page was deleted!</h1><p>The mod page and assocaited discussion was deleted successfully.</p>";
-			include_footer();
+			$page->info("Success", "The mod page and assocaited discussion was deleted successfully.");
 		}
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("Not logged in", "The action you have requested is not currently implemented.");
 	}
-}
+});
 
 $gEndMan->add("mod-list", function (Page $page) {
 	$actor = user_get_current();
@@ -465,8 +463,6 @@ $gEndMan->add("mod-list", function (Page $page) {
 	}
 	
 	$page->add( "</div>" );
-	
-	//include_footer();
 });
 
 $gEndMan->add("mod-rename", function(Page $page) {

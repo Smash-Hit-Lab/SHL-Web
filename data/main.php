@@ -37,9 +37,6 @@ require_once "version.php";
 
 function handle_action(string $action, Page $page) {
 	switch ($action) {
-	// ---- MOD PAGES ---- //
-		case "mod_delete":
-		case "delete_mod": delete_mod(); break;
 	// ---- DISCUSSIONS ---- //
 		case "discussion_update": discussion_update(); break;
 		case "discussion_hide": discussion_hide(); break;
