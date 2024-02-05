@@ -8,6 +8,8 @@ define("PAGE_MODE_API", 1);
 define("PAGE_MODE_HTML", 2);
 define("PAGE_MODE_RAW", 3);
 
+define("NOT_NIL", 2);
+
 class Page {
 	public $title;
 	public $body;
@@ -77,7 +79,7 @@ class Page {
 		die();
 	}
 	
-	function get(string $key, bool $require = true, ?int $length = null, int $sanitise = SANITISE_HTML, $require_post = false) : ?string {
+	function get(string $key, bool | int $require = true, ?int $length = null, int $sanitise = SANITISE_HTML, $require_post = false) : ?string {
 		$value = null;
 		
 		if ($this->mode == PAGE_MODE_API && array_key_exists($key, $this->request)) {
@@ -91,14 +93,13 @@ class Page {
 			$value = $_GET[$key];
 		}
 		
-		// We consider a blank string not to be a value
-		if ($value === "") {
+		// We consider a blank string not to be a value if $require !== NOT_NIL
+		if ($value === "" && $require !== NOT_NIL) {
 			$value = null;
 		}
 		
-		// NOTE We need account for the fact that the string zero in php is
-		// considered truthy :/
-		if ($require && !$value && $value !== "0") {
+		// Error if not specified
+		if ($require && $value === null) {
 			$this->info("An error occured", "Error: parameter '$key' is required.");
 		}
 		

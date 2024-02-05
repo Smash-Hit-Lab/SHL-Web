@@ -38,10 +38,6 @@ require_once "version.php";
 function handle_action(string $action, Page $page) {
 	switch ($action) {
 	// ---- MOD PAGES ---- //
-		case "mod_update":
-		/*DEPRECATED*/ case "edit_mod": edit_mod(); break;
-		case "save_mod": save_mod(); break;
-		case "mod_history": mod_history(); break;
 		case "mod_delete":
 		case "delete_mod": delete_mod(); break;
 	// ---- DISCUSSIONS ---- //
@@ -104,9 +100,6 @@ function main() {
 	
 	// THE REAL STUFF!!!
 	
-	// Fixes up "x" var stuff
-	
-	
 	if (array_key_exists("a", $_GET)) {
 		handle_action($_GET["a"], $page);
 	}
@@ -114,7 +107,8 @@ function main() {
 		handle_action($_GET["action"], $page);
 	}
 	else if (array_key_exists("m", $_GET)) {
-		display_mod();
+		header("Location: ./~" . $_GET["m"]);
+		die();
 	}
 	else if (array_key_exists("u", $_GET)) {
 		display_user($_GET["u"]);
@@ -126,6 +120,7 @@ function main() {
 	// Update: They now redirect to news articles.
 	else if (array_key_exists("p", $_GET)) {
 		header("Location: ./!" . $_GET["p"]);
+		die();
 	}
 	else {
 		// Redirect to home page

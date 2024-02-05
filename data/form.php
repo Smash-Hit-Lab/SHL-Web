@@ -74,11 +74,15 @@ class Form {
 		$this->container($title, $desc, $data);
 	}
 	
-	function textaera(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
+	function textarea(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
 		$s = ($enabled) ? "" : " readonly";
 		$data = "<textarea class=\"form-control\" name=\"$name\" $s>$value</textarea>";
 		
 		$this->container($title, $desc, $data);
+	}
+	
+	function textaera(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
+		$this->textarea($name, $title, $desc, $value, $enabled);
 	}
 	
 	function select(string $name, string $title, string $desc, array $options, ?string $value = null, bool $enabled = true) {

@@ -132,240 +132,12 @@ class ModPage {
 		return ($this->name ? $this->name : $this->package);
 	}
 	
-	function display() {
-		$stalker = user_get_current();
-		
-		if ($this->image) {
-			echo "<div class=\"mod-banner\" style=\"background-image: linear-gradient(to top, #222c, #0008), url('$this->image');\">";
-			echo "<h1>" . $this->get_display_name() . "</h1>";
-			echo "</div>";
-		}
-		else {
-			echo "<h1>" . $this->get_display_name() . "</h1>";
-		}
-		
-		// Header
-		if ($stalker) {
-			echo "<p class=\"centred\">";
-			if (in_array($stalker->name, $this->creators, true) || $stalker->is_mod()) {
-			    echo "<a href=\"./?a=edit_mod&m=$this->package\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit</span> Edit this mod</button></a> ";
-			}
-			echo "<a href=\"./?a=mod_history&m=$this->package\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">history</span> History</button></a> ";
-			
-			if (get_name_if_mod_authed()) {
-			    echo "<a href=\"./?a=mod-rename&oldslug=$this->package\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">edit_location</span> Rename</button></a> ";
-				echo "<a href=\"./?a=mod_delete&package=$this->package\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">delete</span> Delete</button></a> ";
-			}
-			
-			echo "</p>";
-		}
-		
-		if ($this->description) {
-			echo "<h3>Description</h3>";
-			
-			
-			$pd = new Parsedown();
-			$pd->setSafeMode(true);
-			echo "<div id=\"mod-about\" class=\"shl-magic-editor-feild\">";
-			echo $pd->text($this->description);
-			echo "</div>";
-		}
-		
-		if ($this->download || $this->version || $this->creators) {
-			echo "<h3>Basics</h3>";
-		}
-		
-		// Download area
-		$download_content = "";
-		
-		if (!str_starts_with($this->download, "http")) {
-			$download_content = $this->download;
-		}
-		else if (!$stalker && (time() - $this->created) < (60 * 60 * 24 * 3)) {
-			$download_content = "<div class=\"thread-card\">
-			<p><b>You need an account to view this info.</b></p>
-			<p>To prevent spam, mods created in the last 3 days cannot be downloaded by users without an account. Please create an account or come back soon!</p>
-			<p><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
-		</div>";
-		}
-		else {
-			$download_content = "<p>
-			<a href=\"$this->download\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">save_alt</span> Download</button></a>
-			<button id=\"shl-mod-copy-url\" class=\"button secondary\" onclick=\"shl_copy('$this->download', 'shl-mod-copy-url')\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">content_copy</span> Copy link</button>
-			</p>
-			<p class=\"small-text\"><b>Note</b>: Anyone with an account can edit links. Make sure you trust a link before installing a mod from it.</p>";
-		}
-		
-		// Creators list
-		// This code sucks
-		$creators_content = "<!-- Where the fuck does this p tag come from??? -->";
-		
-		for ($i = 0; $i < sizeof($this->creators); $i++) {
-			$user = $this->creators[$i];
-			
-			$on_site = user_exists($user);
-			$pfp = "./?a=generate-logo-coloured&seed=$user";
-			
-			if ($on_site) {
-				$user = new User($user);
-				$pfp = $user->image;
-			}
-			
-			$creators_content .= "<div style=\"display: grid; grid-template-columns: 32px auto;\">
-	<div style=\"grid-column: 1; align-items: center;\"><img src=\"$pfp\" style=\"width: 32px; height: 32px; border-radius: 16px;\"/></div>
-	<div style=\"grid-column: 2; margin-left: 0.5em; align-items: center;\"><p>" . ($on_site ? "<a href=\"./@$user->name\">$user->display</a> (@$user->name)" : $user) . "</p></div>
-</div>";
-		}
-		
-		mod_property("Download", "A link to where the mod can be downloaded.", $download_content, true);
-		mod_property("Version", "The latest version of this mod.", $this->version, true);
-		mod_property("Creators", "The people who created this mod.", $creators_content, true);
-		//mod_property("Security", "A short statement on this mod's security.", $this->security, true);
-		
-		if ($this->wiki || $this->code || $this->status || $this->package) {
-			echo "<h3>Stats</h3>";
-		}
-		
-		mod_property("Wiki article", "A relevant wiki article about the mod.", $this->wiki, true);
-		mod_property("Source code", "A link to where the source code for a mod can be found.", $this->code, true);
-		mod_property("Status", "A short description of the mod's development status.", $this->status, true);
-		
-		echo "<p class=\"small-text\">This page was last updated at " . date("Y-m-d H:i", $this->updated) . " by " . get_nice_display_name($this->author) . "</p>";
-		
-		echo "<script>shl_magic_editor_init();</script>";
-		
-		$disc = new Discussion($this->reviews);
-		$disc->display_reverse("Reviews", "./~" . $this->package);
-		
-		if ($this->colour) {
-			echo render_accent_script($this->colour);
-		}
-	}
-	
-	function display_history() {
-		echo "<h1>History of " . ($this->name ? $this->name : $this->package) . "</h1>";
-		
-		$db = new RevisionDB("mod");
-		$history = $db->history($this->package);
-		
-		echo "<ul>";
-		
-		for ($i = (sizeof($history) - 1); $i >= 0; $i--) {
-			$rev = $history[$i];
-			
-			echo "<li><a href=\"./~$this->package&index=$i\">Edit at " . date("Y-m-d H:i:s", $rev->updated) . "</a> by <a href=\"./@$rev->author\">$rev->author</a> &mdash; $rev->reason</li>";
-		}
-		
-		echo "</ul>";
-	}
-	
-	function display_edit() {
-		$current = user_get_current();
-		$is_mod = $current->is_mod();
-		$is_verified = $current->is_verified();
-		
-		echo "<h1>Editing " . ($this->name ? $this->name : $this->package) . "</h1>";
-		echo "<form action=\"./?a=save_mod&amp;m=$this->package\" method=\"post\">";
-		echo "<h3>Main</h3>";
-		edit_feild("name", "text", "Name", "The name that will be displayed with the mod.", $this->name);
-		edit_feild("description", "textarea", "About", "One or two paragraphs that describe the mod.", htmlspecialchars($this->description));
-		
-		if ($is_verified) {
-			echo "<h3>Appearance</h3>";
-			edit_feild("image", "text", "Banner image", "The URL of the banner image to use for this mod.", $this->image);
-			edit_feild("colour", "text", "Colour", "Colourise the appearance of the site for this mod (hex code)", $this->colour);
-		}
-		
-		echo "<h3>Basic</h3>";
-		edit_feild("download", "text", "Download", "A link to where the mod can be downloaded.", $this->download);
-		edit_feild("version", "text", "Version", "The latest version of this mod.", $this->version);
-		edit_feild("creators", "text", "Creators", "The people who created this mod.", create_comma_array($this->creators));
-		//edit_feild("security", "text", "Security", "A short statement on this mod's security.", $this->security);
-		edit_feild("wiki", "text", "Wiki article", "A relevant wiki article about the mod.", $this->wiki);
-		
-		echo "<h3>Extra</h3>";
-		//edit_feild("code", "text", "Source code", "A link to where the source code for a mod can be found.", $this->code);
-		edit_feild("tags", "text", "Tags", "Keywords and categorical description of this mod.", create_comma_array($this->tags));
-		
-		edit_feild("status", "select", "Status", "A short description of the mod's development status.", $this->status, true, [
-			"" => "None",
-			"Released" => "Released",
-			"Abandoned" => "Abandoned",
-			"Completed" => "Completed",
-			"On hiatus" => "On hiatus",
-			"Incomplete" => "Incomplete",
-			"Planning" => "Planning"
-		]);
-		
-		edit_feild("visibility", "select", "Visibility", "Choose if this mod page will appear on the main mods list.", $this->visibility, true, [
-			"public" => "Public",
-			"unlisted" => "Unlisted",
-		]);
-		
-		echo "<h3>Edit info</h3>";
-		edit_feild("reason", "text", "Edit reason", "Optional description of why this mod was edited.", "");
-		
-		form_end("Save edits");
-	}
-	
-	function save_edit(string $whom) {
-	    $current = user_get_current();
-		$is_mod = $current->is_mod();
-		$is_verified = $current->is_verified();
-		
-		validate_length("Name", $_POST["name"], 100);
-		validate_length("creators", $_POST["creators"], 300);
-		validate_length("wiki", $_POST["wiki"], 500);
-		validate_length("description", $_POST["description"], 2000);
-		validate_length("download", $_POST["download"], 500);
-		//validate_length("code", $_POST["code"], 500);
-		validate_length("tags", $_POST["tags"], 300);
-		validate_length("version", $_POST["version"], 100);
-		//validate_length("security", $_POST["security"], 200);
-		validate_length("status", $_POST["status"], 50);
-		validate_length("reason", $_POST["reason"], 400);
-		
-		$this->name = htmlspecialchars($_POST["name"]);
-		$this->creators = parse_comma_array(htmlspecialchars($_POST["creators"]));
-		$this->wiki = htmlspecialchars($_POST["wiki"]);
-		$this->description = $_POST["description"]; // Rich text feild
-		$this->download = htmlspecialchars($_POST["download"]);
-		//$this->code = htmlspecialchars($_POST["code"]);
-		$this->tags = parse_comma_array(htmlspecialchars($_POST["tags"]));
-		$this->version = htmlspecialchars($_POST["version"]);
-		$this->updated = time();
-		$this->author = $whom;
-		//$this->security = htmlspecialchars($_POST["security"]);
-		$this->status = htmlspecialchars($_POST["status"]);
-		$this->reason = htmlspecialchars($_POST["reason"]);
-		$this->visibility = htmlspecialchars($_POST["visibility"]);
-		
-		if (!in_array($whom, $this->creators, true) && !$is_mod && !$this->exists()) {
-		    $this->creators = array($whom);
-		}
-		
-		// For some reason I didn't put this behind an adminwall before :skull:
-		if ($is_verified) {
-			validate_length("image", $_POST["image"], 1000);
-			validate_length("colour", $_POST["colour"], 15);
-			
-			$this->image = htmlspecialchars($_POST["image"]);
-			$this->colour = htmlspecialchars($_POST["colour"]);
-		}
-		
-		$this->save();
-	}
-	
-	function save_edit_api(Page $page, string $whom, $data) {
-		if (strlen($data["about"]) > 4000) {
-			$page->info("too_long", "The about section for this mod is too long. Please limit the about section to 4000 characters.");
-		}
-		
-		$this->updated = time();
-		$this->author = $whom;
-		$this->description = $data["about"];
-		
-		$this->save();
+	function has_edit_perms(?User $user) {
+		return $user && ( // one of:
+			in_array($user->name, $this->creators, true)
+			|| $user->is_mod()
+			|| !$this->exists()
+		);
 	}
 	
 	function delete() {
@@ -403,10 +175,10 @@ $gEndMan->add("mod-view", function (Page $page) {
 		$page->add("<p style=\"margin: 15px 0 15px 0;\">");
 		
 		if (in_array($stalker->name, $mod->creators, true) || $stalker->is_mod()) {
-			$page->add("<a href=\"./?a=edit_mod&m=$mod->package\"><button class=\"btn btn-primary\">Edit this mod</button></a> ");
+			$page->add("<a href=\"./?a=mod-edit&m=$mod->package\"><button class=\"btn btn-primary\">Edit this mod</button></a> ");
 		}
 		
-		$page->add("<a href=\"./?a=mod_history&m=$mod->package\"><button class=\"btn btn-outline-primary\">History</button></a> ");
+		// $page->add("<a href=\"./?a=mod_history&m=$mod->package\"><button class=\"btn btn-outline-primary\">History</button></a> ");
 		
 		if (get_name_if_mod_authed()) {
 			$page->add("<a href=\"./?a=mod-rename&oldslug=$mod->package\"><button class=\"btn btn-outline-primary\">Rename</button></a> ");
@@ -512,133 +284,84 @@ $gEndMan->add("mod-view", function (Page $page) {
 	$page->add("</div>");
 });
 
-function display_mod() {
-	/**
-	 * Ugly HACK -ed version to make the title display without much effort.
-	 */
-	
-	$revision = array_key_exists("index", $_GET) ? $_GET["index"] : -1;
-	
-	if (!((new RevisionDB("mod"))->has($_GET["m"]))) {
-		include_header();
-		echo "<h1>We don't have that!</h1><p>This mod page does not exist.</p>";
-		include_footer();
-		return;
-	}
-	
-	$mod = new ModPage($_GET["m"], $revision);
-	
-	global $gTitle; $gTitle = $mod->name;
-	
-	if ($revision >= 0) {
-		$gTitle = $gTitle . " (old rev $revision)";
-	}
-	
-	include_header();
-	$mod->display();
-	include_footer();
-}
-
-function edit_mod() : void {
-	include_header();
-	
-	if (!array_key_exists("m", $_GET)) {
-		echo "<h1>Sorry</h1><p>Bad request.</p>";
-		include_footer();
-		return;
-	}
-	
-	$mod_name = $_GET["m"];
+$gEndMan->add("mod-edit", function (Page $page) {
+	$mod_name = $page->get("m");
 	
 	if (!validate_modpage_name($mod_name)) {
-		echo "<h1>Invalid page name</h1><p>The mod page slug is not a valid slug. They should only include lowercase and uppercase basic latin letters, abraic numerals and the underscore, dot and dash.</p>";
-		include_footer();
-		return;
+		$page->info("Invalid page name", "The mod page slug is not a valid slug. They should only include lowercase and uppercase basic latin letters, abraic numerals and the underscore, dot and dash.");
 	}
 	
-	if (!get_name_if_authed()) {
-		echo "<h1>Sorry</h1><p>You need to <a href=\"./?p=login\">log in</a> or <a href=\"./?p=register\">create an account</a> to edit pages.</p>";
-		include_footer();
-		return;
-	}
-	
+	$user = user_get_current();
+	$is_mod = $user->is_mod();
+	$is_verified = $user->is_verified();
 	$mod = new ModPage($mod_name);
-	$mod->display_edit();
 	
-	include_footer();
-}
-
-function mod_history() : void {
-	include_header();
-	
-	if (!array_key_exists("m", $_GET)) {
-		echo "<h1>Sorry</h1><p>Bad request.</p>";
-		include_footer();
-		return;
-	}
-	
-	$mod_name = $_GET["m"];
-	
-	if (!get_name_if_authed()) {
-		echo "<h1>Sorry</h1><p>You need to <a href=\"./?p=login\">log in</a> or <a href=\"./?p=register\">create an account</a> to view page history.</p>";
-		include_footer();
-		return;
-	}
-	
-	$mod = new ModPage($mod_name);
-	$mod->display_history();
-	
-	include_footer();
-}
-
-function save_mod() : void {
-	if (!array_key_exists("m", $_GET)) {
-		sorry("Malformed request.");
-	}
-	
-	$mod_name = $_GET["m"];
-	$user = get_name_if_authed();
-	
-	if (!$user) {
-		sorry("You need to <a href=\"./?p=login\">log in</a> or <a href=\"./?p=register\">create an account</a> to save pages.");
-	}
-	
-	$mod = new ModPage($mod_name);
-    
-	// Make sure the user has permissions to edit the page
-	if (!(in_array($user, $mod->creators, true) || user_get_current()->is_mod() || !$mod->exists())) {
-	    sorry("You don't have permission to edit this page!");
-	}
-	
-	$mod->save_edit($user);
-	
-	// Admin alert!
-	alert("Mod page $mod_name updated by @$user\nUsed legacy editor\nReason: $mod->reason", "./~$mod_name");
-	
-	redirect("./~$mod_name");
-}
-
-$gEndMan->add("mod-save", function (Page $page) {
-	$user = get_name_if_authed();
-	
-	$page->set_mode(PAGE_MODE_API);
-	
-	//if (!$user) {
-	if (true) {
-		$page->set("status", "not_authed");
-		$page->set("message", "You need to log in first!");
-		$page->send();
+	if ($mod->has_edit_perms($user)) {
+		if (!$page->has("submit")) {
+			$page->add("<h1>Editing " . ($mod->name ? $mod->name : $mod->package) . "</h1>");
+			
+			$form = new Form("./?a=mod-edit&m=$mod->package&submit=1");
+			
+			$form->textbox("name", "Name", "The name that will be displayed with the mod.", $mod->name);
+			$form->textarea("description", "About", "One or two paragraphs that describe the mod.", htmlspecialchars($mod->description));
+			
+			if ($is_verified) {
+				$form->textbox("image", "Banner image", "The URL of the banner image to use for this mod.", $mod->image);
+				$form->textbox("colour", "Colour", "Colourise the appearance of the site for this mod (hex code)", $mod->colour);
+			}
+			
+			$form->textbox("download", "Download", "A link to where the mod can be downloaded.", $mod->download);
+			$form->textbox("version", "Version", "The latest version of this mod.", $mod->version);
+			$form->textbox("creators", "Creators", "People who will have premission to edit this mod's page and be credited with creating it.", create_comma_array($mod->creators));
+			
+			$form->select("status", "Status", "A short description of the mod's development status.", [
+				"" => "None",
+				"Released" => "Released",
+				"Abandoned" => "Abandoned",
+				"Completed" => "Completed",
+				"On hiatus" => "On hiatus",
+				"Incomplete" => "Incomplete",
+				"Planning" => "Planning"
+			], $mod->status);
+			
+			$form->select("visibility", "Visibility", "Choose if this mod page will appear on the main mods list.", [
+				"public" => "Public",
+				"unlisted" => "Unlisted",
+			], $mod->visibility);
+			
+			$form->submit("Save page");
+			
+			$page->add($form);
+		}
+		else {
+			$mod->name = $page->get("name", true, 100);
+			$mod->creators = parse_comma_array($page->get("creators", true, 1000));
+			$mod->description = $page->get("description", NOT_NIL, 4000, SANITISE_NONE); // Rich text feild
+			$mod->download = $page->get("download", NOT_NIL, 500);
+			$mod->version = $page->get("version", NOT_NIL, 30);
+			$mod->updated = time();
+			$mod->author = $user->name;
+			$mod->status = $page->get("status", NOT_NIL, 20);
+			$mod->visibility = $page->get("visibility", true, 20);
+			
+			if (!in_array($user->name, $mod->creators, true) && !$mod->exists()) {
+				$mod->creators = [$user->name];
+			}
+			
+			if ($is_verified) {
+				$mod->image = $page->get("image", NOT_NIL, 500);
+				$mod->colour = $page->get("colour", NOT_NIL, 9);
+			}
+			
+			$mod->save();
+			
+			alert("Mod page $mod->package updated by @$user->name", "./~$mod->package");
+			
+			$page->redirect("./~$mod->package");
+		}
 	}
 	else {
-    	$data = $page->get_json();
-    	
-    	$mod = new ModPage($data["page"]);
-    	$mod->save_edit_api($page, $user, $data);
-    	
-    	alert("Mod page #$mod->package updated by @$user\nUsed magic editor", "./~$mod->package");
-    	
-    	$page->set("status", "done");
-    	$page->set("message", "The changes were saved successfully!");
+		$page->info("Sorry", "You need to <a href=\"./?p=login\">log in</a> or <a href=\"./?p=register\">create an account</a> to edit pages.");
 	}
 });
 
