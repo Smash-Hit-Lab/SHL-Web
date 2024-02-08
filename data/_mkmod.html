@@ -1,7 +1,7 @@
 <script>
 	function openModPage() {
 		let e = document.getElementById("create-mod");
-		window.location = "./?a=edit_mod&m=" + e.value;
+		window.location = "./?a=mod-edit&m=" + e.value.replaceAll(" ", "_");
 	}
 	
 	function show_dialogue() {
@@ -16,7 +16,7 @@
 </script>
 <p><button class="btn btn-primary" onclick="show_dialogue()">Create new page</button></p>
 <div id="mod-page-new-dialogue-container" class="dialogue-bg" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000c; z-index: 1000;">
-	<div class="card dialogue-surface" style="position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(50vw, 20em); height: 80vh; background: #fff; border-radius: 0.5em; box-shadow: 0 0.3em 0.4em var(--colour-background-dark-b); padding: 1.0em;"><div class="card-body">
+	<div class="card dialogue-surface" style="position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max(50vw, 20em); height: 80vh; background: #fff; border-radius: 0.5em; box-shadow: 0 0.3em 0.4em var(--colour-background-dark-b);"><div class="card-body">
 		<div class="dialogue-seperation" style="display: grid; grid-template-rows: 3em auto 3em; height: 100%;">
 			<div style="grid-row: 1; margin-bottom: 3em;">
 				<h4>Create a new entry for your mod</h4>

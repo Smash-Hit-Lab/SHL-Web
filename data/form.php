@@ -56,7 +56,9 @@ class Form {
 		$this->container_type = $type;
 	}
 	
-	function textbox(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
+	function textbox(string $name, string $title, string $desc, ?string $value = "", bool $enabled = true) {
+		$value = ($value === null ? "" : $value);
+		
 		$s = ($enabled) ? "" : " readonly";
 		$data = "<input class=\"form-control\" type=\"text\" name=\"$name\" placeholder=\"$title\" value=\"$value\" $s/>";
 		
@@ -76,7 +78,7 @@ class Form {
 	
 	function textarea(string $name, string $title, string $desc, string $value = "", bool $enabled = true) {
 		$s = ($enabled) ? "" : " readonly";
-		$data = "<textarea class=\"form-control\" name=\"$name\" $s>$value</textarea>";
+		$data = "<textarea class=\"form-control\" name=\"$name\" style=\"font-family: monospace; height: 200px;\" $s>$value</textarea>";
 		
 		$this->container($title, $desc, $data);
 	}

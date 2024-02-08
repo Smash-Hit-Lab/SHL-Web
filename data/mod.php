@@ -158,9 +158,11 @@ $gEndMan->add("mod-view", function (Page $page) {
 	
 	$page->title($mod->get_title());
 	
-	if ($mod->image) {
-		$page->add("<div class=\"mod-banner\" style=\"background-image: linear-gradient(to top, #222c, #0008), url('$mod->image');\">");
-		$page->add("<h1>" . $mod->get_title() . "</h1>");
+	$img = $mod->image ? $mod->image : "./?a=generate-logo-coloured&seed=" . $mod->get_title();
+	
+	if ($img) {
+		$page->add("<div class=\"mod-banner\" style=\"background-image: linear-gradient(to top, #000c, #0008), url('$img');\">");
+		$page->add("<h1 style=\"text-align: center;\">" . $mod->get_title() . "</h1>");
 		$page->add("</div>");
 	}
 	else {
@@ -316,13 +318,9 @@ $gEndMan->add("mod-edit", function (Page $page) {
 			
 			$form = new Form("./?a=mod-edit&m=$mod->package&submit=1");
 			
-			// $form->textbox("name", "Name", "The name that will be displayed with the mod.", $mod->name);
 			$form->textarea("description", "About", "One or two paragraphs that describe the mod.", htmlspecialchars($mod->description));
 			
-			if ($is_verified) {
-				$form->textbox("image", "Banner image", "The URL of the banner image to use for this mod.", $mod->image);
-				$form->textbox("colour", "Colour", "Colourise the appearance of the site for this mod (hex code)", $mod->colour);
-			}
+			$form->textbox("image", "Banner image", "The URL of the banner image to use for this mod. This can only be edited by verified users.", $mod->image, $is_verified);
 			
 			$form->textbox("download", "Download", "A link to where the mod can be downloaded.", $mod->download);
 			$form->textbox("code", "Source files", "An optional link to where the source files can be found.", $mod->code);
@@ -366,7 +364,6 @@ $gEndMan->add("mod-edit", function (Page $page) {
 			
 			if ($is_verified) {
 				$mod->image = $page->get("image", NOT_NIL, 500);
-				$mod->colour = $page->get("colour", NOT_NIL, 9);
 			}
 			
 			$mod->save();
