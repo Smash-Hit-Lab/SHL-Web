@@ -1,7 +1,7 @@
 <?php
 
 function validate_modpage_name(string $name) : bool {
-	$chars = str_split("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_-.");
+	$chars = str_split("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890._-:");
 	
 	// Charset limit
 	for ($i = 0; $i < strlen($name); $i++) {
@@ -104,6 +104,8 @@ class ModPage {
 		
 		$db = new RevisionDB("mod");
 		
+		$new_slug = str_replace(" ", "_", $new_slug);
+		
 		// Check if page already exists
 		if ($db->has($new_slug) || !validate_modpage_name($new_slug)) {
 			return false;
@@ -136,6 +138,10 @@ class ModPage {
 		$db->delete($this->package);
 		discussion_delete_given_id($this->reviews);
 	}
+	
+	function get_title() {
+		return str_replace("_", " ", $this->package);
+	}
 }
 
 $gEndMan->add("mod-view", function (Page $page) {
@@ -150,15 +156,15 @@ $gEndMan->add("mod-view", function (Page $page) {
 	
 	$mod = new ModPage($mod_id);
 	
-	$page->title($mod->get_display_name());
+	$page->title($mod->get_title());
 	
 	if ($mod->image) {
 		$page->add("<div class=\"mod-banner\" style=\"background-image: linear-gradient(to top, #222c, #0008), url('$mod->image');\">");
-		$page->add("<h1>" . $mod->get_display_name() . "</h1>");
+		$page->add("<h1>" . $mod->get_title() . "</h1>");
 		$page->add("</div>");
 	}
 	else {
-		$page->add("<h1>" . $mod->get_display_name() . "</h1>");
+		$page->add("<h1>" . $mod->get_title() . "</h1>");
 	}
 	
 	// Header
@@ -166,7 +172,7 @@ $gEndMan->add("mod-view", function (Page $page) {
 		$page->add("<p style=\"margin: 15px 0 15px 0;\">");
 		
 		if (in_array($stalker->name, $mod->creators, true) || $stalker->is_mod()) {
-			$page->add("<a href=\"./?a=mod-edit&m=$mod->package\"><button class=\"btn btn-primary\">Edit this mod</button></a> ");
+			$page->add("<a href=\"./?a=mod-edit&m=$mod->package\"><button class=\"btn btn-primary\">Edit page</button></a> ");
 		}
 		
 		// $page->add("<a href=\"./?a=mod_history&m=$mod->package\"><button class=\"btn btn-outline-primary\">History</button></a> ");
@@ -293,6 +299,8 @@ $gEndMan->add("mod-view", function (Page $page) {
 $gEndMan->add("mod-edit", function (Page $page) {
 	$mod_name = $page->get("m");
 	
+	$mod_name = str_replace(" ", "_", $mod_name);
+	
 	if (!validate_modpage_name($mod_name)) {
 		$page->info("Invalid page name", "The mod page slug is not a valid slug. They should only include lowercase and uppercase basic latin letters, abraic numerals and the underscore, dot and dash.");
 	}
@@ -304,11 +312,11 @@ $gEndMan->add("mod-edit", function (Page $page) {
 	
 	if ($mod->has_edit_perms($user)) {
 		if (!$page->has("submit")) {
-			$page->add("<h1>Editing " . ($mod->name ? $mod->name : $mod->package) . "</h1>");
+			$page->add("<h1>Editing " . $mod->get_title() . "</h1>");
 			
 			$form = new Form("./?a=mod-edit&m=$mod->package&submit=1");
 			
-			$form->textbox("name", "Name", "The name that will be displayed with the mod.", $mod->name);
+			// $form->textbox("name", "Name", "The name that will be displayed with the mod.", $mod->name);
 			$form->textarea("description", "About", "One or two paragraphs that describe the mod.", htmlspecialchars($mod->description));
 			
 			if ($is_verified) {
@@ -341,7 +349,7 @@ $gEndMan->add("mod-edit", function (Page $page) {
 			$page->add($form);
 		}
 		else {
-			$mod->name = $page->get("name", true, 100);
+			// $mod->name = $page->get("name", true, 100);
 			$mod->creators = parse_comma_array($page->get("creators", true, 1000));
 			$mod->description = $page->get("description", NOT_NIL, 4000, SANITISE_NONE); // Rich text feild
 			$mod->download = $page->get("download", NOT_NIL, 500);
@@ -440,7 +448,7 @@ $gEndMan->add("mod-list", function (Page $page) {
 			continue;
 		}
 		
-		$title = $mp->name ? $mp->name : $mp->package;
+		$title = $mp->get_title();
 		$desc = htmlspecialchars(substr($mp->description, 0, 100));
 		
 		if (strlen($desc) >= 100) {
@@ -480,14 +488,14 @@ $gEndMan->add("mod-rename", function(Page $page) {
 		}
 		else {
 			$old_slug = $page->get("oldslug");
-			$new_slug = $page->get("newslug");
+			$new_slug = str_replace(" ", "_", $page->get("newslug"));
 			
 			// Rename the page
 			$mod = new ModPage($old_slug);
 			$result = $mod->rename($new_slug);
 			
 			if ($result) {
-				alert("@$user renamed mod page '$old_slug' to '$new_slug'", "./~$new_slug");
+				alert("@$user->name renamed mod page '$old_slug' to '$new_slug'", "./~$new_slug");
 				$page->redirect("./~$new_slug");
 			}
 			else {
