@@ -412,18 +412,17 @@ $gEndMan->add("mod-delete", function (Page $page) {
 });
 
 $gEndMan->add("mod-list", function (Page $page) {
-	$actor = user_get_current();
+	$user = user_get_current();
 	
 	$db = new RevisionDB("mod");
 	
 	$list = $db->enumerate();
 	
 	$page->title("List of mods");
-	
 	$page->heading(1, "List of Mods" );
 	
 	// Make mod modual
-	if ($actor) {
+	if ($user) {
 		$page->addFromFile('../../data/_mkmod.html');
 	}
 	// Join message
@@ -431,9 +430,11 @@ $gEndMan->add("mod-list", function (Page $page) {
 		$page->add( "<div class=\"card thread-card\"><div class=\"card-body\">
 			<p><b>Want to add your mod here?</b></p>
 			<p>Log in or create an account to add your mod to the database.</p>
-			<p class=\"card-text\"><a href=\"./?a=auth-login\"><button><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">login</span> Login</button></a> <a href=\"./?a=auth-register\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">person_add</span> Register</button></a></p>
+			<p class=\"card-text\"><a href=\"./?a=auth-login\"><button class=\"btn btn-primary\">Login</button></a> <a href=\"./?a=auth-register\"><button class=\"btn btn-outline-primary\">Register</button></a></p>
 		</div></div>" );
 	}
+	
+	$show_unlisted = $user && $user->is_mod() && $page->has("unlisted");
 	
 	// Grid of mods
 	$page->add( "<div class=\"mod-listing\">" );
@@ -441,7 +442,7 @@ $gEndMan->add("mod-list", function (Page $page) {
 	for ($i = 0; $i < sizeof($list); $i++) {
 		$mp = new ModPage($list[$i]);
 		
-		if ($mp->visibility !== "public") {
+		if ($mp->visibility !== "public" && !$show_unlisted) {
 			continue;
 		}
 		
@@ -468,6 +469,10 @@ $gEndMan->add("mod-list", function (Page $page) {
 	}
 	
 	$page->add( "</div>" );
+	
+	if ($user->is_mod() && !$show_unlisted) {
+		$page->add("<a href=\"./?a=mod-list&unlisted=1\"><button class=\"btn btn-outline-secondary\">Show unlisted</button>");
+	}
 });
 
 $gEndMan->add("mod-rename", function(Page $page) {
