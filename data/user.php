@@ -1280,13 +1280,14 @@ $gEndMan->add("user-view", function (Page $page) {
 	}
 	
 	if ($user->about) {
-		$page->add("<h3>Description</h3>");
+		$page->add("<div class=\"card\" style=\"margin-bottom: 10px;\"><div class=\"card-header\"><b>Description</b></div><div class=\"card-body\">");
 		$pd = new Parsedown();
 		$pd->setSafeMode(true);
-		$page->add($pd->text($user->about));
+		$page->add(str_replace("<p>", "<p class=\"card-text\">", $pd->text($user->about)));
+		$page->add("</div></div>");
 	}
 	
-	$page->add("<h3>Statistics</h3>");
+	$page->add("<div class=\"card\" style=\"margin-bottom: 10px;\"><div class=\"card-header\"><b>Statistics</b></div><div class=\"card-body\">");
 	user_show_stat($page, "Joined", Date("Y-m-d", $user->created));
 	user_show_stat($page, "Last login", Date("Y-m-d", $user->login_time));
 	if ($user->count_roles()) {
@@ -1295,9 +1296,9 @@ $gEndMan->add("user-view", function (Page $page) {
 	if ($user->youtube) {
 		user_show_stat($page, "YouTube", "<a href=\"https://youtube.com/@$user->youtube\">@$user->youtube</a>");
 	}
-	$page->add("</div>");
+	$page->add("</div></div>");
 	
-	$page->add("<div class=\"tab-pane fade\" id=\"nav-profile\" role=\"tabpanel\" aria-labelledby=\"nav-profile-tab\" tabindex=\"0\">");
+	$page->add("</div><div class=\"tab-pane fade\" id=\"nav-profile\" role=\"tabpanel\" aria-labelledby=\"nav-profile-tab\" tabindex=\"0\">");
 	
 	$disc = new Discussion($user->wall);
 	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
@@ -1346,7 +1347,7 @@ $gEndMan->add("user-view", function (Page $page) {
 });
 
 function user_show_stat(Page $page, string $title, string $value) {
-	$page->add("<div style=\"display: inline-block; width: 40%; margin-bottom: 15px;\"><div style=\"display: inline-block; width: 150px;\"><b>$title</b></div>$value</div>");
+	$page->add("<p class=\"card-text\"><b>$title</b><br/>$value</p>");
 }
 
 function display_user(string $user) {
