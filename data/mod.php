@@ -470,7 +470,7 @@ $gEndMan->add("mod-list", function (Page $page) {
 	
 	$page->add( "</div>" );
 	
-	if ($user->is_mod() && !$show_unlisted) {
+	if ($user && $user->is_mod() && !$show_unlisted) {
 		$page->add("<a href=\"./?a=mod-list&unlisted=1\"><button class=\"btn btn-outline-secondary\">Show unlisted</button>");
 	}
 });

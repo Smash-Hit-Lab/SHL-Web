@@ -91,26 +91,19 @@ function do_admin_dashboard() {
 		
 		echo "<h4>Site and maintanance</h4>";
 		admin_action_item("./?a=site_config", "settings", "Settings");
-		admin_action_item("./?a=site-styles", "style", "Site styles");
-		admin_action_item("./?a=send_notification", "notifications_active", "Send notification");
-		admin_action_item("./?a=backup_db", "backup", "Create backup");
-		admin_action_item("./?a=storage_list", "inventory", "Site storage");
+		// admin_action_item("./?a=site-styles", "style", "Site styles");
+		// admin_action_item("./?a=send_notification", "notifications_active", "Send notification");
+		admin_action_item("./?a=database-backup", "backup", "Create backup");
+		admin_action_item("./?a=storage-list", "inventory", "Site storage");
 		
 		echo "<h4>Users and accounts</h4>";
 		admin_action_item("./?a=user-list", "people", "List of users");
 		admin_action_item("./?a=user_ban", "gavel", "Ban user");
-		admin_action_item("./?a=user_delete", "person_off", "Delete user");
-		admin_action_item("./?a=user_roles", "security", "Edit roles");
-		admin_action_item("./?a=admin-impersonate&handle=smashhitlab", "business", "Brand account");
+		// admin_action_item("./?a=user_delete", "person_off", "Delete user");
+		// admin_action_item("./?a=user_roles", "security", "Edit roles");
+		// admin_action_item("./?a=admin-impersonate&handle=smashhitlab", "business", "Brand account");
 		admin_action_item("./?a=user-update-display", "badge", "Edit display");
-		admin_action_item("./?a=user-init-reset", "lock", "Reset password");
-		
-		echo "<h4>Mod pages</h4>";
-		admin_action_item("./?a=delete_mod", "delete", "Delete page");
-		
-		echo "<h4>Forum</h4>";
-		admin_action_item("./?a=forum-rename", "edit", "Rename thread");
-		admin_action_item("./?a=forum-delete", "delete", "Delete thread");
+		// admin_action_item("./?a=user-init-reset", "lock", "Reset password");
 		
 		include_footer(true);
 	}
@@ -119,40 +112,44 @@ function do_admin_dashboard() {
 	}
 }
 
-function do_user_ban() {
-	$banner = get_name_if_mod_authed();
+$gEndMan->add("user-ban", function (Page $page) {
+	$banner = user_get_current();
 	
-	if ($banner) {
-		if (!array_key_exists("handle", $_POST)) {
-			include_header();
-			echo "<h1>Ban or unban user</h1>";
+	if ($banner && $banner->is_mod()) {
+		if (!$page->has("submit")) {
+			$page->add("<h1>Ban or unban user</h1>");
 			
-			$have_handle = false;
+			$form = new Form("./?a=user-ban&submit=1");
+			$form->textbox("handle", "Handle", "Handle or username of the user to ban.", $page->get("handle"));
+			$form->select("duration", "Duration", "How long to ban this user.", [
+				"21600" => "6 Hours",
+				"86400" => "1 Day",
+				"604800" => "1 Week",
+				"2678400" => "1 Month",
+				"31536000" => "1 Year",
+				"-1" => "Forever",
+				"1" => "Remove ban"
+			]);
+			$form->textbox("reason", "Reason", "Type a short reason why you want to ban this user (optional).");
+			$form->submit("Set ban status");
 			
-			if (array_key_exists("handle", $_GET)) {
-				$have_handle = true;
-			}
-			
-			form_start("./?a=user_ban");
-			edit_feild("handle", "text", "Handle", "Handle or username of the user to ban.", $have_handle ? $_GET["handle"] : "", !$have_handle);
-			edit_feild("duration", "select", "Duration", "How long to ban this user.", "1w", true, array("21600" => "6 Hours", "86400" => "1 Day", "604800" => "1 Week", "2678400" => "1 Month", "31536000" => "1 Year", "-1" => "Forever", "1" => "Remove ban"));
-			edit_feild("reason", "text", "Reason", "Type a short reason why you want to ban this user (optional). <b>This message is not shown to the user at the moment and is for audit logs only.</b>", "");
-			echo "<p><b>Note:</b> Any IP addresses assocaited with this user will be blocked for the set duration, up to 3 months. We do not block IPs for longer as they can change periodically.</p>";
-			form_end("Set ban status");
-			
-			include_footer();
+			$page->add($form);
 		}
 		else {
-			$handle = htmlspecialchars($_POST["handle"]);
-			$duration = intval($_POST["duration"]);
-			$reason = htmlspecialchars($_POST["reason"]);
+			$page->csrf($banner);
+			
+			$handle = $page->get("handle");
+			$duration = $page->get("duration");
+			$reason = $page->get("reason", NOT_NIL);
+			
+			$duration = ($duration === "forever") ? -1 : (int) $duration;
 			
 			$user = new User($handle);
 			
 			// Check if the user is admin
 			if ($user->is_admin() || $user->is_mod()) {
-				alert("@$banner tried to ban @$user->name", "./?u=$banner");
-				sorry("You cannot ban a staff member. This action has been reported.");
+				alert("@$banner->name tried to ban @$user->name", "./@$banner->name");
+				$page->info("You cannot ban a staff member. This action has been reported.");
 			}
 			
 			$user->set_ban($duration);
@@ -161,121 +158,117 @@ function do_user_ban() {
 			
 			// Unbanning
 			if ($duration === 0 || $duration === 1) {
-				alert("User $user->name unbanned by $banner\n\nReason: $reason", "./?u=$user->name");
+				alert("User $user->name unbanned by $banner->name\n\nReason: $reason", "./@$user->name");
 				
 				// Display success page
-				include_header();
-				echo "<h1>Account unbanned</h1><p>The account $handle was successfully unbanned.</p>";
-				include_footer();
+				$page->add("<h1>Account unbanned</h1><p>The account $handle was successfully unbanned.</p>");
 			}
 			// Banning
 			else {
-				alert("User $user->name banned by $banner\n\nReason: $reason", "./?u=$user->name");
+				alert("User $user->name banned by $banner->name\n\nReason: $reason", "./@$user->name");
 				
 				// Display success page
-				include_header();
-				echo "<h1>Account banned</h1><p>The account $handle was successfully banned until $until.</p>";
-				include_footer();
+				$page->add("<h1>Account banned</h1><p>The account $handle was successfully banned until $until.</p>");
 			}
 		}
 		
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("The action you have requested is not currently implemented.");
 	}
 }
 
-function do_user_delete() {
-	$banner = get_name_if_admin_authed();
-	
-	if ($banner) {
-		if (!array_key_exists("handle", $_POST)) {
-			include_header();
-			echo "<h1>Delete user</h1>";
-			
-			$have_handle = false;
-			
-			if (array_key_exists("handle", $_GET)) {
-				$have_handle = true;
-			}
-			
-			form_start("./?a=user_delete");
-			edit_feild("handle", "text", "Handle", "Handle or username of the user to delete.", $have_handle ? $_GET["handle"] : "", !$have_handle);
-			edit_feild("reason", "text", "Reason", "Type a short reason why you want to delete this user (required). <b>This message is not shown to the user at the moment and is for audit logs only.</b>", "");
-			form_end("Delete this user");
-			
-			include_footer();
-		}
-		else {
-			$handle = htmlspecialchars($_POST["handle"]);
-			$reason = htmlspecialchars($_POST["reason"]);
-			
-			$user = new User($handle);
-			
-			if (strlen($reason) < 3) {
-				sorry("Please type a better ban reason.");
-			}
-			
-			if ($user->is_admin()) {
-				alert("Admin @$banner tried to delete staff member @$user->name\n\nReason: $reason", "./?u=$banner");
-				sorry("You cannot delete a staff member. This action has been reported.");
-			}
-			
-			if ($user->is_verified()) {
-				alert("Admin @$banner tried to delete verified user @$user->name\n\nReason: $reason", "./?u=$banner");
-				sorry("You cannot delete a verified member. This action has been reported.");
-			}
-			
-			$user->delete();
-			
-			alert("Admin @$banner deleted user @$user->name\n\nReason: $reason", "./?u=$banner");
-			
-			include_header();
-			echo "<h1>Account deleted</h1><p>The account $handle was successfully deleted.</p>";
-			include_footer();
-		}
-		
-	}
-	else {
-		sorry("The action you have requested is not currently implemented.");
-	}
-}
+// function do_user_delete() {
+// 	$banner = get_name_if_admin_authed();
+// 	
+// 	if ($banner) {
+// 		if (!array_key_exists("handle", $_POST)) {
+// 			include_header();
+// 			echo "<h1>Delete user</h1>";
+// 			
+// 			$have_handle = false;
+// 			
+// 			if (array_key_exists("handle", $_GET)) {
+// 				$have_handle = true;
+// 			}
+// 			
+// 			form_start("./?a=user_delete");
+// 			edit_feild("handle", "text", "Handle", "Handle or username of the user to delete.", $have_handle ? $_GET["handle"] : "", !$have_handle);
+// 			edit_feild("reason", "text", "Reason", "Type a short reason why you want to delete this user (required). <b>This message is not shown to the user at the moment and is for audit logs only.</b>", "");
+// 			form_end("Delete this user");
+// 			
+// 			include_footer();
+// 		}
+// 		else {
+// 			$handle = htmlspecialchars($_POST["handle"]);
+// 			$reason = htmlspecialchars($_POST["reason"]);
+// 			
+// 			$user = new User($handle);
+// 			
+// 			if (strlen($reason) < 3) {
+// 				sorry("Please type a better ban reason.");
+// 			}
+// 			
+// 			if ($user->is_admin()) {
+// 				alert("Admin @$banner tried to delete staff member @$user->name\n\nReason: $reason", "./?u=$banner");
+// 				sorry("You cannot delete a staff member. This action has been reported.");
+// 			}
+// 			
+// 			if ($user->is_verified()) {
+// 				alert("Admin @$banner tried to delete verified user @$user->name\n\nReason: $reason", "./?u=$banner");
+// 				sorry("You cannot delete a verified member. This action has been reported.");
+// 			}
+// 			
+// 			$user->delete();
+// 			
+// 			alert("Admin @$banner deleted user @$user->name\n\nReason: $reason", "./?u=$banner");
+// 			
+// 			include_header();
+// 			echo "<h1>Account deleted</h1><p>The account $handle was successfully deleted.</p>";
+// 			include_footer();
+// 		}
+// 		
+// 	}
+// 	else {
+// 		sorry("The action you have requested is not currently implemented.");
+// 	}
+// }
 
-function do_send_notification() {
-	/**
-	 * Send a notification to everyone who uses the website.
-	 */
-	
-	$user = get_name_if_admin_authed();
-	
-	if ($user) {
-		if (!array_key_exists("submit", $_GET)) {
-			include_header();
-			echo "<h1>Send notification</h1>";
-			form_start("./?a=send_notification&submit=1");
-			edit_feild("title", "text", "Title", "Title of the notification to send to users.", "");
-			edit_feild("url", "text", "Link", "The URL that the notification should lead to.", "");
-			echo "<p><b>Warning:</b> This notification will be sent to everyone who has an account! Please think carefully before using this feature.</p>";
-			form_end("Send notification");
-			include_footer();
-		}
-		else {
-			$db = new Database("user");
-			$users = $db->enumerate();
-			
-			$title = $_POST["title"];
-			$link = $_POST["url"];
-			
-			notify_many($users, $title, $link);
-			
-			alert("Global notification sent by @$user\n\nTitle: $title\nLink: $link", "./?u=$user");
-			redirect("./?a=notifications");
-		}
-	}
-	else {
-		sorry("The action you have requested is not currently implemented.");
-	}
-}
+// function do_send_notification() {
+// 	/**
+// 	 * Send a notification to everyone who uses the website.
+// 	 */
+// 	
+// 	$user = get_name_if_admin_authed();
+// 	
+// 	if ($user) {
+// 		if (!array_key_exists("submit", $_GET)) {
+// 			include_header();
+// 			echo "<h1>Send notification</h1>";
+// 			form_start("./?a=send_notification&submit=1");
+// 			edit_feild("title", "text", "Title", "Title of the notification to send to users.", "");
+// 			edit_feild("url", "text", "Link", "The URL that the notification should lead to.", "");
+// 			echo "<p><b>Warning:</b> This notification will be sent to everyone who has an account! Please think carefully before using this feature.</p>";
+// 			form_end("Send notification");
+// 			include_footer();
+// 		}
+// 		else {
+// 			$db = new Database("user");
+// 			$users = $db->enumerate();
+// 			
+// 			$title = $_POST["title"];
+// 			$link = $_POST["url"];
+// 			
+// 			notify_many($users, $title, $link);
+// 			
+// 			alert("Global notification sent by @$user\n\nTitle: $title\nLink: $link", "./?u=$user");
+// 			redirect("./?a=notifications");
+// 		}
+// 	}
+// 	else {
+// 		sorry("The action you have requested is not currently implemented.");
+// 	}
+// }
 
 $gEndMan->add("notifications-send-multicast", function(Page $page) {
 	$handle = get_name_if_authed();
@@ -308,36 +301,37 @@ $gEndMan->add("notifications-send-multicast", function(Page $page) {
 	}
 });
 
-function do_backup_db() {
+$gEndMan->add("database-backup", function (Page $page) {
 	/**
 	 * Back up the site database.
 	 */
 	
-	$user = get_name_if_admin_authed();
+	$user = user_get_current();
 	
-	if ($user) {
-		if (!array_key_exists("submit", $_GET)) {
-			include_header();
-			echo "<h1>Backup database</h1>";
-			form_start("./?a=backup_db&submit=1");
-			echo "<p><b>Note:</b> This operation might take a long time to preform.</p>";
-			form_end("Backup database");
-			include_footer();
+	if ($user && $user->is_admin()) {
+		if (!$page->has("submit")) {
+			$page->heading(1, "Backup database");
+			
+			$form = new Form("./?a=database-backup&submit=1");
+			$form->submit("Backup database");
+			
+			$page->add($form);
 		}
 		else {
+			$page->csrf($user);
+			
 			$path = htmlspecialchars(basename(backup_database()));
 			
-			include_header();
-			echo "<h1>Backup is done</h1><p>The database was backed up to <code>$path</code>.</p><p><a href=\"./?a=storage_download&file=$path\">Click here to download the backup</a></p>";
-			include_footer();
+			$page->heading(1, "Backup complete!");
+			$page->para("The database was backed up to <code>$path</code>.</p><p><a href=\"./?a=storage-download&file=$path\">Click here to download the backup</a>");
 		}
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("Can't do that", "The action you have requested is not currently implemented.");
 	}
-}
+});
 
-function do_storage_download() {
+$gEndMan->add("storage-download", function (Page $page) {
 	/**
 	 * Download a file from the site storage.
 	 */
@@ -355,19 +349,17 @@ function do_storage_download() {
 	else {
 		sorry("The action you have requested is not currently implemented.");
 	}
-}
+});
 
-function do_storage_list() {
+$gEndMan->add("storage-list", function (Page $page) {
 	/**
 	 * Download a file from the site storage.
 	 */
 	
-	$user = get_name_if_admin_authed();
+	$user = user_get_current();
 	
-	if ($user) {
-		include_header();
-		
-		echo "<h1>Site storage</h1>";
+	if ($user && $user->is_admin()) {
+		$page->add("<h1>Site storage</h1>");
 		
 		$files = list_folder("../../data/store/");
 		
@@ -375,15 +367,13 @@ function do_storage_list() {
 			$name = $files[$i];
 			$name_url = urlencode($name);
 			
-			echo "<p><a href=\"./?a=storage_download&file=$name_url\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">description</span> $name</a> [<a href=\"./?a=storage-delete&index=$i\">Delete</a>]</p>";
+			$page->add("<p><a href=\"./?a=storage-download&file=$name_url\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">description</span> $name</a> [<a href=\"./?a=storage-delete&index=$i\">Delete</a>]</p>");
 		}
-		
-		include_footer();
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("The action you have requested is not currently implemented.");
 	}
-}
+});
 
 $gEndMan->add("storage-delete", function (Page $page) {
 	/**
@@ -392,116 +382,116 @@ $gEndMan->add("storage-delete", function (Page $page) {
 	 */
 	
 	$index = (int) $page->get("index");
-	$user = get_name_if_admin_authed();
+	$user = user_get_current();
 	$storage_dir = "../../data/store/";
 	
-	if ($user) {
+	if ($user && $user->is_admin()) {
 		$files = list_folder($storage_dir);
 		
 		if ($index < sizeof($files)) {
 			unlink($storage_dir . $files[$index]);
 		}
 		
-		$page->redirect("./?a=storage_list");
+		$page->redirect("./?a=storage-list");
 	}
 	else {
 		$page->info("Log in first", "Please log in first.");
 	}
 });
 
-function do_user_roles() {
-	$actor = get_name_if_admin_authed();
-	
-	if ($actor) {
-		if (!array_key_exists("submit", $_GET)) {
-			include_header();
-			echo "<h1>Edit user roles</h1>";
-			
-			$have_handle = false;
-			
-			if (array_key_exists("handle", $_GET)) {
-				$have_handle = true;
-			}
-			
-			form_start("./?a=user_roles&submit=1");
-			edit_feild("handle", "text", "Handle", "Handle or username of the user to update.", $have_handle ? $_GET["handle"] : "", !$have_handle);
-			edit_feild("role", "select", "Role", "Which role to set this user to.", "1w", true, [
-				"headmaster" => "Headmaster",
-				"admin" => "Administrator",
-				"mod" => "Moderator",
-				"none" => "None"
-			]);
-			edit_feild("reason", "text", "Reason", "Type a short reason why you want to change this user's role. (required)", "");
-			form_end("Set role");
-			
-			include_footer();
-		}
-		else {
-			$handle = htmlspecialchars($_POST["handle"]);
-			$reason = htmlspecialchars($_POST["reason"]);
-			$role = htmlspecialchars($_POST["role"]);
-			
-			$user = new User($handle);
-			$actor = new User($actor);
-			
-			if (strlen($reason) < 3) {
-				sorry("Please type a better ban reason.");
-			}
-			
-			if ($role == "headmaster" && !$actor->has_role("headmaster")) {
-				sorry("Only another headmaster can grant the headmaster role.");
-			}
-			
-			if ($user->has_role("headmaster") && ($actor->name !== $user->name)) {
-				sorry("Only the person who has the headmaster role can demote themselves.");
-			}
-			
-			if ($user->has_role("impersonateable")) {
-				sorry("This user has the impersonateable role and must be manually updated in the database.");
-			}
-			
-			if ($user->get_role_score() > $actor->get_role_score()) {
-				sorry("You cannot change the role of $user->name because you do not have a role that is at least equal to that role.");
-			}
-			
-			if (!$actor->has_role("admin") && !$actor->has_role("devel")) {
-				sorry("You must be an admin to change roles!");
-			}
-			
-			switch ($role) {
-				case "headmaster": {
-					$user->set_roles(array("headmaster", "admin", "staff"));
-					break;
-				}
-				case "admin": {
-					$user->set_roles(array("admin", "staff"));
-					break;
-				}
-				case "mod": {
-					$user->set_roles(array("mod", "staff"));
-					break;
-				}
-				case "none": {
-					$user->set_roles(array());
-					break;
-				}
-				default: {
-					sorry("Invalid role type: $role.");
-				}
-			}
-			
-			alert("User @$user->name has role set to \"$role\" by @$actor->name\n\nReason: $reason");
-			
-			include_header();
-			echo "<h1>Roles updated</h1><p>The role for $handle was set to $role!</p>";
-			include_footer();
-		}
-		
-	}
-	else {
-		sorry("The action you have requested is not currently implemented.");
-	}
-}
+// $gEndMan->add("user-roles", function (Page $page) {
+// 	$user = user_get_current();
+// 	
+// 	if ($user && $user->is_admin()) {
+// 		if (!array_key_exists("submit", $_GET)) {
+// 			include_header();
+// 			echo "<h1>Edit user roles</h1>";
+// 			
+// 			$have_handle = false;
+// 			
+// 			if (array_key_exists("handle", $_GET)) {
+// 				$have_handle = true;
+// 			}
+// 			
+// 			form_start("./?a=user_roles&submit=1");
+// 			edit_feild("handle", "text", "Handle", "Handle or username of the user to update.", $have_handle ? $_GET["handle"] : "", !$have_handle);
+// 			edit_feild("role", "select", "Role", "Which role to set this user to.", "1w", true, [
+// 				"headmaster" => "Headmaster",
+// 				"admin" => "Administrator",
+// 				"mod" => "Moderator",
+// 				"none" => "None"
+// 			]);
+// 			edit_feild("reason", "text", "Reason", "Type a short reason why you want to change this user's role. (required)", "");
+// 			form_end("Set role");
+// 			
+// 			include_footer();
+// 		}
+// 		else {
+// 			$handle = htmlspecialchars($_POST["handle"]);
+// 			$reason = htmlspecialchars($_POST["reason"]);
+// 			$role = htmlspecialchars($_POST["role"]);
+// 			
+// 			$user = new User($handle);
+// 			$actor = new User($actor);
+// 			
+// 			if (strlen($reason) < 3) {
+// 				sorry("Please type a better ban reason.");
+// 			}
+// 			
+// 			if ($role == "headmaster" && !$actor->has_role("headmaster")) {
+// 				sorry("Only another headmaster can grant the headmaster role.");
+// 			}
+// 			
+// 			if ($user->has_role("headmaster") && ($actor->name !== $user->name)) {
+// 				sorry("Only the person who has the headmaster role can demote themselves.");
+// 			}
+// 			
+// 			if ($user->has_role("impersonateable")) {
+// 				sorry("This user has the impersonateable role and must be manually updated in the database.");
+// 			}
+// 			
+// 			if ($user->get_role_score() > $actor->get_role_score()) {
+// 				sorry("You cannot change the role of $user->name because you do not have a role that is at least equal to that role.");
+// 			}
+// 			
+// 			if (!$actor->has_role("admin") && !$actor->has_role("devel")) {
+// 				sorry("You must be an admin to change roles!");
+// 			}
+// 			
+// 			switch ($role) {
+// 				case "headmaster": {
+// 					$user->set_roles(array("headmaster", "admin", "staff"));
+// 					break;
+// 				}
+// 				case "admin": {
+// 					$user->set_roles(array("admin", "staff"));
+// 					break;
+// 				}
+// 				case "mod": {
+// 					$user->set_roles(array("mod", "staff"));
+// 					break;
+// 				}
+// 				case "none": {
+// 					$user->set_roles(array());
+// 					break;
+// 				}
+// 				default: {
+// 					sorry("Invalid role type: $role.");
+// 				}
+// 			}
+// 			
+// 			alert("User @$user->name has role set to \"$role\" by @$actor->name\n\nReason: $reason");
+// 			
+// 			include_header();
+// 			echo "<h1>Roles updated</h1><p>The role for $handle was set to $role!</p>";
+// 			include_footer();
+// 		}
+// 		
+// 	}
+// 	else {
+// 		sorry("The action you have requested is not currently implemented.");
+// 	}
+// });
 
 $gEndMan->add("admin-impersonate", function(Page $page) {
 	$actor = get_name_if_admin_authed();

@@ -46,15 +46,10 @@ function handle_action(string $action, Page $page) {
 		case "discussion_poll": discussion_poll(); break;
 	// ---- ADMIN ACTION PAGES ---- //
 		case "site_config": do_site_config(); break;
-		case "backup_db": do_backup_db(); break;
-		case "storage_download": do_storage_download(); break;
-		case "storage_list": do_storage_list(); break;
-		case "user_roles": do_user_roles(); break;
-		case "user_ban": do_user_ban(); break;
-		case "user_delete": do_user_delete(); break;
-		case "user_verify": user_verify(); break;
+		// case "user_roles": do_user_roles(); break;
+		// case "user_ban": do_user_ban(); break;
+		// case "user_verify": user_verify(); break;
 		case "admin_dashboard": do_admin_dashboard(); break;
-		case "send_notification": do_send_notification(); break;
 		// Transitioning to using Endpoint Manager
 		default: {
 			global $gEndMan; $okay = $gEndMan->run($action, $page);

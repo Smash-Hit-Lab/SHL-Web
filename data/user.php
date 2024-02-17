@@ -1057,7 +1057,7 @@ function user_get_sak() : string {
 	return (new User($user))->get_sak();
 }
 
-function user_verify_sak(string $key) : bool {
+function user-verify_sak(string $key) : bool {
 	/**
 	 * Verify that the SAK of the current user matches the given one.
 	 */
@@ -1322,7 +1322,7 @@ $gEndMan->add("user-view", function (Page $page) {
 		
 		$page->heading(3, "Verification");
 		$page->para("Verification allows normal users to access more powerful actions.");
-		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user_verify&handle=$user->name");
+		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name");
 	}
 	
 	// Block user
@@ -1445,7 +1445,7 @@ function display_user(string $user) {
 			mod_property("Change roles", "Roles set permissions for what users are allowed to do. They are often used for giving someone moderator or manager privleges.", "<a href=\"./?a=user_roles&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">security</span> Edit roles</button></a>");
 		}
 		
-		mod_property("Verified", "Verified members are checked by staff to be who they claim they are.", "<a href=\"./?a=user_verify&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">verified</span> Toggle verified status</button></a>");
+		mod_property("Verified", "Verified members are checked by staff to be who they claim they are.", "<a href=\"./?a=user-verify&handle=$user->name\"><button class=\"button secondary\"><span class=\"material-icons\" style=\"position: relative; top: 5px; margin-right: 3px;\">verified</span> Toggle verified status</button></a>");
 	}
 	
 	// Block user
@@ -1539,11 +1539,13 @@ function display_user_accent_script(User $user) {
 	}
 }
 
-function user_verify() {
-	$verifier = get_name_if_mod_authed();
+$page->add("user-verify", function (Page $page) {
+	$verifier = user_get_current();
 	
-	if ($verifier) {
-		$handle = htmlspecialchars($_GET["handle"]);
+	if ($verifier && $verifier->is_mod()) {
+		$page->csrf($verifier);
+		
+		$handle = $page->get("handle");
 		
 		$user = new User($handle);
 		
@@ -1551,23 +1553,23 @@ function user_verify() {
 			$user->verify(null);
 		}
 		else {
-			$user->verify($verifier);
+			$user->verify($verifier->name);
 		}
 		
-		alert("User $user->name was marked verified", "./@$user->name");
+		alert("@$verifier->name has toggled verified status for user @$user->name", "./@$user->name");
 		
-		redirect("./@$user->name");
+		$page->redirect("./@$user->name");
 	}
 	else {
-		sorry("The action you have requested is not currently implemented.");
+		$page->info("The action you have requested is not currently implemented.");
 	}
-}
+});
 
 $gEndMan->add("account-delete", function (Page $page) {
 	$user = user_get_current();
 	
 	if ($user) {
-		if (!array_key_exists("submit", $_GET)) {
+		if (!$page->has("submit")) {
 			$page->heading(1, "Delete your account");
 			
 			$form = new Form("./?a=account-delete&submit=1");
