@@ -1057,7 +1057,7 @@ function user_get_sak() : string {
 	return (new User($user))->get_sak();
 }
 
-function user-verify_sak(string $key) : bool {
+function user_verify_sak(string $key) : bool {
 	/**
 	 * Verify that the SAK of the current user matches the given one.
 	 */
@@ -1539,7 +1539,7 @@ function display_user_accent_script(User $user) {
 	}
 }
 
-$page->add("user-verify", function (Page $page) {
+$gEndMan->add("user-verify", function (Page $page) {
 	$verifier = user_get_current();
 	
 	if ($verifier && $verifier->is_mod()) {

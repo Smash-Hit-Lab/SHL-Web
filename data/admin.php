@@ -176,7 +176,7 @@ $gEndMan->add("user-ban", function (Page $page) {
 	else {
 		$page->info("The action you have requested is not currently implemented.");
 	}
-}
+});
 
 // function do_user_delete() {
 // 	$banner = get_name_if_admin_authed();
