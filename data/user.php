@@ -1331,10 +1331,13 @@ $gEndMan->add("user-view", function (Page $page) {
 		$page->para("Blocking this user will allow you to hide them from your account.");
 		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak());
 	}
-	else {
+	else if ($stalker) {
 		$page->heading(3, "Account");
 		$page->para("Settings related to your own account.");
 		$page->link_button("", "Edit account", "./?a=account-edit");
+	}
+	else {
+		$page->para("<i>There are no actions for you to preform.</i>");
 	}
 	
 	$page->add("</div>");

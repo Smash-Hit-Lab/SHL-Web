@@ -12,12 +12,12 @@ function do_site_config() {
 	
 	if ($user) {
 		if (!array_key_exists("submit", $_GET)) {
-			include_header();
+			include_header(true);
 			echo "<h1>Site configuration</h1>";
 			echo "<form action=\"./?a=site_config&submit=1\" method=\"post\">";
 			
-			echo "<h3>Community settings</h3>";
-			edit_feild("sitename", "text", "Site name", "The name of your community.", get_config("sitename", "My New Community"));
+			// echo "<h3>Community settings</h3>";
+			// edit_feild("sitename", "text", "Site name", "The name of your community.", get_config("sitename", "My New Community"));
 			
 			echo "<h3>Features</h3>";
 			edit_feild("enable_discussions", "select", "Discussions", "If discussions should be enabled, disabled or closed sitewide. Closed will disable new comments but still show old ones, while disabled will stop showing them entirely. Comments can still be marked as hidden when closed, but cannot when disabled.", get_config("enable_discussions", "enabled"), true, array("enabled" => "Enabled", "disabled" => "Disabled", "closed" => "Closed"));
@@ -25,31 +25,24 @@ function do_site_config() {
 			echo "<h3>Connections</h3>";
 			edit_feild("discord_webhook", "text", "Discord webhook", "The discord webhook that will be used for alerts.", get_config("discord_webhook", ""));
 			
-			echo "<h4>Registering</h4>";
+			echo "<h4>Security</h4>";
+			edit_feild("enable_login", "select", "Enable logins", "Allow users to log in to the stie.</p><p><b>Warning:</b> If you set this to completely disabled and all admins are logged out, then you need to wait for someone with database access to fix the site.", get_config("enable_login", "users"), true, array("users" => "All users can log in", "verified" => "Verified users and admins can log in", "admins" => "Only admins can log in", "closed" => "Logging in is disabled"));
 			edit_feild("register", "select", "Enable registering", "Weather registering of new accounts should be limited or not.", get_config("register", "anyone"), true, array("anyone" => "Anyone can register", "users" => "Only users can register", "admins" => "Only admins can register", "closed" => "Registering is disabled"));
-			edit_feild("email_required", "select", "Require email for registering", "If enabled, this sends passwords to users over email instead of telling them after account registration. Please note that email is not encrypted and could be intercepted.", get_config("email_required", false) ? "true" : "false", true, array("false" => "Do not require email", "true" => "Require email"));
 			edit_feild("require_logins_everywhere", "select", "Require logins for everything", "Requires that users are logged in to access any part of the site.", get_config("require_logins_everywhere", false) ? "true" : "false", true, array("false" => "Don't require login", "true" => "Require login"));
 			
-			echo "<h4>Logging in</h4>";
-			edit_feild("enable_login", "select", "Enable logins", "Allow users to log in to the stie.</p><p><b>Warning:</b> If you set this to completely disabled and all admins are logged out, then you need to wait for Knot126 to fix the site.", get_config("enable_login", "users"), true, array("users" => "All users can log in", "verified" => "Verified users and admins can log in", "admins" => "Only admins can log in", "closed" => "Logging in is disabled"));
-			
 			echo "<h3>Audit notes</h3>";
-			edit_feild("reason", "text", "Reason", "Reason for updating the site config, if any.", "");
+			edit_feild("reason", "text", "Reason", "Reason for updating the site config.", "");
 			
 			echo "<input type=\"submit\" value=\"Save settings\"/>";
 			echo "</form>";
-			include_footer();
+			include_footer(true);
 		}
 		else {
-			// Community
-			set_config("sitename", htmlspecialchars($_POST["sitename"]));
-			
 			// Features
 			set_config("enable_discussions", $_POST["enable_discussions"], array("enabled", "disabled", "closed"));
 			
 			// Security
 			set_config("register", $_POST["register"], array("anyone", "users", "admins", "closed"));
-			set_config("email_required", $_POST["email_required"] === "true");
 			set_config("require_logins_everywhere", $_POST["require_logins_everywhere"] === "true");
 			set_config("enable_login", $_POST["enable_login"], array("users", "verified", "admins", "closed"));
 			
@@ -102,7 +95,7 @@ function do_admin_dashboard() {
 		// admin_action_item("./?a=user_delete", "person_off", "Delete user");
 		// admin_action_item("./?a=user_roles", "security", "Edit roles");
 		// admin_action_item("./?a=admin-impersonate&handle=smashhitlab", "business", "Brand account");
-		admin_action_item("./?a=user-update-display", "badge", "Edit display");
+		// admin_action_item("./?a=user-update-display", "badge", "Edit display");
 		// admin_action_item("./?a=user-init-reset", "lock", "Reset password");
 		
 		include_footer(true);
@@ -567,36 +560,36 @@ $gEndMan->add("user-list", function (Page $page) {
 	}
 });
 
-$gEndMan->add("user-update-display", function (Page $page) {
-	$actor = user_get_current();
-	
-	if ($actor && $actor->is_admin()/* && $actor->has_role("crime")*/) {
-		if (!$page->has("submit")) {
-			$page->heading(1, "Update display name");
-			
-			$form = new Form("./?a=user-update-display&submit=1");
-			$form->textbox("handle", "Handle", "The handle of the user's display name to change.");
-			$form->textbox("display", "Display name", "New display name for the user.");
-			$form->submit("Update display name");
-			
-			$page->add($form);
-		}
-		else {
-			$handle = $page->get("handle");
-			$display = $page->get("display");
-			
-			if (!user_exists($handle)) {
-				$page->info("User does not exist", "The user @$handle does not exist.");
-			}
-			
-			$user = new User($handle);
-			$user->display = $display;
-			$user->save();
-			
-			$page->info("Display name changed", "The display name for @$handle has been updated.");
-		}
-	}
-	else {
-		$page->info("Please log in!", "Please log in to update your display name.");
-	}
-});
+// $gEndMan->add("user-update-display", function (Page $page) {
+// 	$actor = user_get_current();
+// 	
+// 	if ($actor && $actor->is_admin()/* && $actor->has_role("crime")*/) {
+// 		if (!$page->has("submit")) {
+// 			$page->heading(1, "Update display name");
+// 			
+// 			$form = new Form("./?a=user-update-display&submit=1");
+// 			$form->textbox("handle", "Handle", "The handle of the user's display name to change.");
+// 			$form->textbox("display", "Display name", "New display name for the user.");
+// 			$form->submit("Update display name");
+// 			
+// 			$page->add($form);
+// 		}
+// 		else {
+// 			$handle = $page->get("handle");
+// 			$display = $page->get("display");
+// 			
+// 			if (!user_exists($handle)) {
+// 				$page->info("User does not exist", "The user @$handle does not exist.");
+// 			}
+// 			
+// 			$user = new User($handle);
+// 			$user->display = $display;
+// 			$user->save();
+// 			
+// 			$page->info("Display name changed", "The display name for @$handle has been updated.");
+// 		}
+// 	}
+// 	else {
+// 		$page->info("Please log in!", "Please log in to update your display name.");
+// 	}
+// });
