@@ -1322,7 +1322,7 @@ $gEndMan->add("user-view", function (Page $page) {
 		
 		$page->heading(3, "Verification");
 		$page->para("Verification allows normal users to access more powerful actions.");
-		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name");
+		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name&key=" . $stalker->get_sak());
 	}
 	
 	// Block user
