@@ -24,6 +24,8 @@ function do_site_config() {
 			
 			echo "<h3>Connections</h3>";
 			edit_feild("discord_webhook", "text", "Discord webhook", "The discord webhook that will be used for alerts.", get_config("discord_webhook", ""));
+			edit_feild("discord_client_id", "text", "Discord client id", "used for oauth", get_config("discord_client_id", ""));
+			edit_feild("discord_client_secret", "text", "Discord client secret", "used for oauth", get_config("discord_client_secret", ""));
 			
 			echo "<h4>Security</h4>";
 			edit_feild("enable_login", "select", "Enable logins", "Allow users to log in to the stie.</p><p><b>Warning:</b> If you set this to completely disabled and all admins are logged out, then you need to wait for someone with database access to fix the site.", get_config("enable_login", "users"), true, array("users" => "All users can log in", "verified" => "Verified users and admins can log in", "admins" => "Only admins can log in", "closed" => "Logging in is disabled"));
@@ -47,6 +49,8 @@ function do_site_config() {
 			set_config("enable_login", $_POST["enable_login"], array("users", "verified", "admins", "closed"));
 			
 			set_config("discord_webhook", $_POST["discord_webhook"]);
+			set_config("discord_client_id", $_POST["discord_client_id"]);
+			set_config("discord_client_secret", $_POST["discord_client_secret"]);
 			
 			$reason = htmlspecialchars($_POST["reason"]);
 			$reason = $reason ? $reason : "*(none)*";

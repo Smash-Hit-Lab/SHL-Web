@@ -391,41 +391,96 @@ $gEndMan->add("auth-logout", function(Page $page) {
 	$page->info("Logged out", "You have been logged out of the Smash Hit Lab.");
 });
 
-$gEndMan->add("auth-reset-password", function(Page $page) {
-	/**
-	 * Note: The site should not respond differently when a user does or doesn't
-	 * exist.
-	 */
-	if (!$page->has("submit")) {
-		$page->heading(1, "Reset password");
+$gEndMan->add("auth-discord", function (Page $page) {
+	if (!$page->has("state")) {
+		$state = random_base32(32);
+		$state_hash = sha256($state);
+		$page->cookie("os", $state_hash);
+		$page->redirect("https://discord.com/api/oauth2/authorize?client_id=914936328943190027&response_type=code&redirect_uri=https%3A%2F%2Fsmashhitlab.000webhostapp.com%2Flab%2F%3Fa%3Dauth-discord&scope=identify&state=$state");
+	}
+	else if (sha256($page->get("state")) === $page->get_cookie("os")) {
+		$code = $page->get("code");
+		$shl_auth = "Authorization: Basic " . base64_encode(get_config("discord_client_id") . ":" . get_config("discord_client_secret")) .  "\r\n";
 		
-		$form = new Form("./?a=auth-reset-password&submit=1");
-		$form->textbox("handle", "Handle", "What was your username that you signed up for?");
-		$form->textbox("code", "Code", "What was the reset code that was sent to your email?");
-		$form->submit("Reset password");
+		// Get the access token
+		$body = http_build_query([
+			"grant_type" => "authorization_code",
+			"code" => $code,
+			"redirect_uri" => "https://smashhitlab.000webhostapp.com/lab/?a=auth-discord",
+		]);
+		echo $body;
+		$at = post("https://discord.com/api/v10/oauth2/token", $body, "application/x-www-form-urlencoded", $shl_auth);
 		
-		$page->add($form);
+		if (!$at) {
+			$page->info("Could not contact discord.");
+		}
+		
+		// Decode the result
+		$at = json_decode($at, true);
+		$auth = "Authorization: " . $at["token_type"] . " " . $at["access_token"] .  "\r\n";
+		
+		// Get the user ID
+		// (Note that we trust discord to get the UID correct and if not we're
+		// screwed)
+		$duser = http_get("https://discord.com/api/v10/users/@me", $auth);
+		
+		if (!$duser) {
+			$page->info("Could not get user info.");
+		}
+		
+		$duser = json_decode($duser, true);
+		$page->add("Discord user ID: " . $duser["id"]);
+		
+		// Revoke our access token since we don't need it anymore
+		$rv = post("https://discord.com/api/v10/oauth2/token/revoke", http_build_query([
+			"token" => $at["access_token"],
+			"token_type_hint" => "access_token",
+		]), "application/x-www-form-urlencoded", $shl_auth);
+		
+		if (!$rv) {
+			$page->info("Could not revoke token.");
+		}
 	}
 	else {
-		$handle = $page->get("handle");
-		$code = $page->get("code");
-		
-		if (!user_exists($handle)) {
-			$page->info("Reset password", "Unforunately, your password reset did not work. It might be becuase your account does not exist or you typed the code wrong.");
-		}
-		
-		$user = new User($handle);
-		
-		$new_pw = $user->do_reset($code);
-		
-		if ($new_pw) {
-			$page->info("Yay!", "Your password was reset! Your new password is <code>$new_pw</code>.");
-		}
-		else {
-			$page->info("Reset password", "Unforunately, your password reset did not work. It might be becuase your account does not exist or you typed the code wrong.");
-		}
+		$page->info("Error", "Authentication error. Most likely, OAuth2 state is not consistent.");
 	}
 });
+
+// $gEndMan->add("auth-reset-password", function(Page $page) {
+// 	/**
+// 	 * Note: The site should not respond differently when a user does or doesn't
+// 	 * exist.
+// 	 */
+// 	if (!$page->has("submit")) {
+// 		$page->heading(1, "Reset password");
+// 		
+// 		$form = new Form("./?a=auth-reset-password&submit=1");
+// 		$form->textbox("handle", "Handle", "What was your username that you signed up for?");
+// 		$form->textbox("code", "Code", "What was the reset code that was sent to your email?");
+// 		$form->submit("Reset password");
+// 		
+// 		$page->add($form);
+// 	}
+// 	else {
+// 		$handle = $page->get("handle");
+// 		$code = $page->get("code");
+// 		
+// 		if (!user_exists($handle)) {
+// 			$page->info("Reset password", "Unforunately, your password reset did not work. It might be becuase your account does not exist or you typed the code wrong.");
+// 		}
+// 		
+// 		$user = new User($handle);
+// 		
+// 		$new_pw = $user->do_reset($code);
+// 		
+// 		if ($new_pw) {
+// 			$page->info("Yay!", "Your password was reset! Your new password is <code>$new_pw</code>.");
+// 		}
+// 		else {
+// 			$page->info("Reset password", "Unforunately, your password reset did not work. It might be becuase your account does not exist or you typed the code wrong.");
+// 		}
+// 	}
+// });
 
 /**
  * Redirects for legacy pages which are still linked sometimes

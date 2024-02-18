@@ -1,6 +1,25 @@
 <?php
 
-function post(string $url, string $body) {
+function http_get(string $url, string $headers = "") {
+	/**
+	 * Do a GET request to the given URL with the given body.
+	 */
+	
+	$options = [
+		"http" => [
+			"method" => "GET",
+			"header" => $headers,
+			"timeout" => 3,
+		]
+	];
+	
+	$context = stream_context_create($options);
+	$result = @file_get_contents($url, false, $context);
+	
+	return $result;
+}
+
+function post(string $url, string $body, string $content_type = "application/json", string $headers = "") {
 	/**
 	 * Do a POST request to the given URL with the given body.
 	 */
@@ -8,14 +27,14 @@ function post(string $url, string $body) {
 	$options = [
 		"http" => [
 			"method" => "POST",
-			"header" => "Content-Type: application/json\r\n",
+			"header" => "Content-Type: $content_type\r\n$headers",
 			"content" => $body,
 			"timeout" => 3,
 		]
 	];
 	
 	$context = stream_context_create($options);
-	$result = @file_get_contents($url, false, $context);
+	$result = file_get_contents($url, false, $context);
 	
 	return $result;
 }
