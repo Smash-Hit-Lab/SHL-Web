@@ -34,7 +34,7 @@ function post(string $url, string $body, string $content_type = "application/jso
 	];
 	
 	$context = stream_context_create($options);
-	$result = file_get_contents($url, false, $context);
+	$result = @file_get_contents($url, false, $context);
 	
 	return $result;
 }

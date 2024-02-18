@@ -416,6 +416,7 @@ class User {
 			$this->display = (property_exists($info, "display") ? $info->display : $info->name);
 			$this->pronouns = (property_exists($info, "pronouns") ? $info->pronouns : "");
 			$this->password = $info->password;
+			$this->discord_uid = (property_exists($info, "pw_reset") ? $info->pw_reset : null);
 			$this->pw_reset = (property_exists($info, "pw_reset") ? $info->pw_reset : "");
 			$this->tokens = $info->tokens;
 			$this->email = $info->email ? $info->email : "";
@@ -424,12 +425,10 @@ class User {
 			$this->login_time = (property_exists($info, "login_time") ? $info->login_time : -1);
 			$this->verified = property_exists($info, "verified") ? $info->verified : null;
 			$this->ban = property_exists($info, "ban") ? $info->ban : null;
-			$this->edit_locked = property_exists($info, "edit_locked") ? $info->edit_locked : false;
 			$this->wall = property_exists($info, "wall") ? $info->wall : random_discussion_name();
 			$this->youtube = property_exists($info, "youtube") ? $info->youtube : "";
 			$this->image_type = property_exists($info, "image_type") ? $info->image_type : "gravatar";
 			$this->image = property_exists($info, "image") ? $info->image : "";
-			$this->image_age = property_exists($info, "image_age") ? $info->image_age : 0;
 			$this->accent = property_exists($info, "accent") ? $info->accent : null;
 			$this->about = property_exists($info, "about") ? $info->about : "";
 			$this->sak = property_exists($info, "sak") ? $info->sak : random_hex();
@@ -456,20 +455,13 @@ class User {
 				$this->schema = 2;
 				$this->save();
 			}
-			
-			// Schema R3: Account database
-			
-			// Refresh PFP if it's been more than two weeks
-			// if (time() > ($this->image_age + 60 * 60 * 24 * 14)) {
-			// 	$this->update_image();
-			// 	$this->save();
-			// }
 		}
 		else {
 			$this->name = $name;
 			$this->display = $name;
 			$this->pronouns = "";
 			$this->password = null;
+			$this->discord_uid = null;
 			$this->pw_reset = "";
 			$this->tokens = array();
 			$this->email = "";
@@ -478,12 +470,10 @@ class User {
 			$this->login_time = time();
 			$this->verified = null;
 			$this->ban = null;
-			$this->edit_locked = false;
 			$this->wall = random_discussion_name();
 			$this->youtube = "";
 			$this->image_type = "generated";
 			$this->image = "";
-			$this->image_age = time();
 			$this->accent = null;
 			$this->about = "";
 			$this->sak = random_hex();
@@ -932,6 +922,10 @@ class User {
 		
 		return (array_search($mod, $this->mods) !== false);
 	}
+	
+	function set_discord_uid(string $uid) {
+		$this->discord_uid = $uid;
+	}
 }
 
 function user_exists(string $username) : bool {
@@ -941,6 +935,46 @@ function user_exists(string $username) : bool {
 	
 	$db = new Database("user");
 	return $db->has($username);
+}
+
+function user_with_discord_uid(string $uid) : ?string {
+	/**
+	 * Get the name of the user with the given user ID, or null if it doesn't
+	 * exist.
+	 */
+	
+	$db = new Database("user");
+	return $db->where_one(["discord_uid" => $uid]);
+}
+
+function user_new_handle_from_name(string $base) : string {
+	/**
+	 * Generate a new random user handle similar to $base. This is unique.
+	 */
+	
+	$db = new Database("user");
+	
+	if (!validate_username($base)) {
+		while (true) {
+			$handle = random_base32(12);
+			
+			if (!$db->has($handle)) {
+				return $handle;
+			}
+		}
+	}
+	
+	if (!$db->has($base)) {
+		return $base;
+	}
+	
+	while (true) {
+		$handle = "$base-" . random_base32(5);
+		
+		if (!$db->has($handle)) {
+			return $handle;
+		}
+	}
 }
 
 function check_token__(string $name, string $lockbox) {
@@ -1138,10 +1172,6 @@ $gEndMan->add("account-edit", function (Page $page) {
 	$page->force_bs();
 	
 	if ($user) {
-		if ($user->edit_locked) {
-			$page->info("Editing has been locked", "Your account has been locked from editing account information. This was probably due to a violation of our content policy.");
-		}
-		
 		if (!$page->has("submit")) {
 			$page->title("Edit your account");
 			$page->heading(1, "Edit account info");

@@ -84,9 +84,6 @@ function auth_login_action(Page $page) {
 	// Check if logins are enabled
 	auth_login_availability($page, $handle);
 	
-	// Before login event
-	$gEvents->trigger("user.login.before", $page);
-	
 	// Validate the handle
 	if (!validate_username($handle)) {
 		$page->info("Sorry!", "Your handle isn't valid. Handles can be at most 24 characters and must only use upper and lower case A - Z as well as underscores (<code>_</code>), dashes (<code>-</code>) and fullstops (<code>.</code>).");
@@ -94,8 +91,6 @@ function auth_login_action(Page $page) {
 	
 	// Check that the handle exists
 	if (!user_exists($handle)) {
-		$gEvents->trigger("user.login.failed.wrong_handle", $page);
-		
 		$page->info("Login failed!", "There isn't any user with the name you typed. Make sure that there are no errors in the handle you typed and try again.");
 	}
 	
@@ -106,8 +101,6 @@ function auth_login_action(Page $page) {
 	if (!$user->is_admin()) {
 		// User ban
 		if ($user->is_banned()) {
-			$gEvents->trigger("user.login.failed.banned", $page);
-			
 			$until = $user->unban_date();
 			
 			if ($until == "forever") {
@@ -119,8 +112,6 @@ function auth_login_action(Page $page) {
 		
 		// IP ban
 		if (is_ip_blocked($ip)) {
-			$gEvents->trigger("user.login.failed.ip_block", $page);
-			
 			$page->info("Sorry!", "Something went wrong while logging in. Make sure your username and password are correct, then try again.");
 		}
 	}
@@ -391,54 +382,148 @@ $gEndMan->add("auth-logout", function(Page $page) {
 	$page->info("Logged out", "You have been logged out of the Smash Hit Lab.");
 });
 
+function auth_do_block_check(Page $page, ?User $user) {
+	$ip = crush_ip();
+	
+	if (!$user || !$user->is_admin()) {
+		// User ban
+		if ($user && $user->is_banned()) {
+			$until = $user->unban_date();
+			
+			if ($until == "forever") {
+				$page->info("You are banned", "You have been banned from the Smash Hit Lab.");
+			}
+			
+			$page->info("You are banned", "You have been banned from the Smash Hit Lab until " . date("Y-m-d h:i", $until) . ".");
+		}
+		
+		// IP ban
+		if (is_ip_blocked($ip)) {
+			$page->info("Sorry!", "Something went wrong while logging in. Make sure your username and password are correct, then try again.");
+		}
+	}
+}
+
+function discord_bind_user(Page $page, string $discord_uid) {
+	$user = user_get_current();
+	
+	if (!$user) {
+		$page->info("Huh?", "It seems like you were logged out! This shouldn't have happened.");
+	}
+	
+	$current_binding = user_with_discord_uid($discord_uid);
+	
+	if ($current_binding && $current_binding !== $user->name) {
+		$page->info("Whoops!", "It seems like your Discord account is already bound to another user!");
+	}
+	
+	$user->set_discord_uid($discord_uid);
+	$user->save();
+	
+	$page->info("Success", "Your Discord account and Smash Hit Lab account have been bound! You can now use Discord to log in.");
+}
+
+function discord_user_login(Page $page, string $handle) {
+	auth_login_availability($page, $handle);
+	
+	$user = new User($handle);
+	
+	auth_do_block_check($page, $user);
+	
+	// Everything should be okay at this point
+	$token = $user->make_token();
+	$tk = $token->get_id();
+	$lb = $token->make_lockbox();
+	
+	// Set the cookies
+	$page->cookie("tk", $tk, 60 * 60 * 24 * 14);
+	$page->cookie("lb", $lb, 60 * 60 * 24 * 14);
+	
+	// Redirect to user page
+	$page->redirect("./@$handle");
+}
+
+function discord_user_create(Page $page, string $discord_uid, string $base_name) {
+	auth_register_availability($page);
+	auth_do_block_check($page, null);
+	
+	$handle = user_new_handle_from_name($base_name);
+	
+	$user = new User($handle);
+	$user->set_discord_uid($discord_uid);
+	$user->save();
+	
+	discord_user_login($page, $handle);
+}
+
 $gEndMan->add("auth-discord", function (Page $page) {
+	$redirect_uri = "https://smashhitlab.000webhostapp.com/lab/?a=auth-discord";
+	$client_id = get_config("discord_client_id");
+	$client_secret = get_config("discord_client_secret");
+	$discord_api = "https://discord.com/api/v10";
+	
 	if (!$page->has("state")) {
 		$state = random_base32(32);
 		$state_hash = sha256($state);
 		$page->cookie("os", $state_hash);
-		$page->redirect("https://discord.com/api/oauth2/authorize?client_id=914936328943190027&response_type=code&redirect_uri=https%3A%2F%2Fsmashhitlab.000webhostapp.com%2Flab%2F%3Fa%3Dauth-discord&scope=identify&state=$state");
+		$page->redirect("https://discord.com/api/oauth2/authorize?client_id=$client_id&response_type=code&redirect_uri=" . urlencode($redirect_uri) . "&scope=identify&state=$state");
 	}
 	else if (sha256($page->get("state")) === $page->get_cookie("os")) {
 		$code = $page->get("code");
-		$shl_auth = "Authorization: Basic " . base64_encode(get_config("discord_client_id") . ":" . get_config("discord_client_secret")) .  "\r\n";
+		$shl_auth = "Authorization: Basic " . base64_encode("$client_id:$client_secret") .  "\r\n";
 		
 		// Get the access token
 		$body = http_build_query([
 			"grant_type" => "authorization_code",
 			"code" => $code,
-			"redirect_uri" => "https://smashhitlab.000webhostapp.com/lab/?a=auth-discord",
+			"redirect_uri" => $redirect_uri,
 		]);
-		echo $body;
-		$at = post("https://discord.com/api/v10/oauth2/token", $body, "application/x-www-form-urlencoded", $shl_auth);
+		$token_info = post("$discord_api/oauth2/token", $body, "application/x-www-form-urlencoded", $shl_auth);
 		
-		if (!$at) {
+		if (!$token_info) {
 			$page->info("Could not contact discord.");
 		}
 		
 		// Decode the result
-		$at = json_decode($at, true);
-		$auth = "Authorization: " . $at["token_type"] . " " . $at["access_token"] .  "\r\n";
+		$token_info = json_decode($token_info, true);
+		$user_auth = "Authorization: " . $token_info["token_type"] . " " . $token_info["access_token"] .  "\r\n";
 		
 		// Get the user ID
 		// (Note that we trust discord to get the UID correct and if not we're
 		// screwed)
-		$duser = http_get("https://discord.com/api/v10/users/@me", $auth);
+		$discord_user_info = http_get("$discord_api/users/@me", $user_auth);
 		
-		if (!$duser) {
+		if (!$discord_user_info) {
 			$page->info("Could not get user info.");
 		}
 		
-		$duser = json_decode($duser, true);
-		$page->add("Discord user ID: " . $duser["id"]);
+		$discord_user_info = json_decode($discord_user_info, true);
 		
 		// Revoke our access token since we don't need it anymore
-		$rv = post("https://discord.com/api/v10/oauth2/token/revoke", http_build_query([
-			"token" => $at["access_token"],
+		$result = post("$discord_api/oauth2/token/revoke", http_build_query([
+			"token" => $token_info["access_token"],
 			"token_type_hint" => "access_token",
 		]), "application/x-www-form-urlencoded", $shl_auth);
 		
-		if (!$rv) {
+		if (!$result) {
 			$page->info("Could not revoke token.");
+		}
+		
+		// Actually preform the action
+		$discord_uid = $discord_user_info["id"];
+		$discord_name = $discord_user_info["username"];
+		
+		$user = user_get_current();
+		$handle = user_with_discord_uid($discord_uid);
+		
+		if ($user) {
+			discord_bind_user($page, $discord_uid);
+		}
+		else if ($handle) {
+			discord_user_login($page, $handle);
+		}
+		else {
+			discord_user_create($page, $discord_uid, $discord_name);
 		}
 	}
 	else {

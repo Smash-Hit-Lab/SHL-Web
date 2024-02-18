@@ -158,6 +158,35 @@ class Database {
 		array_shift($array);
 		return $array;
 	}
+	
+	function where_one(array $query) : ?string {
+		/**
+		 * Return the first entry that has matched all key => value pairs in
+		 * $query
+		 * 
+		 * TODO: Switch to a real document database so it actually preforms okay
+		 */
+		
+		$items = $this->enumerate();
+		
+		foreach ($items as $item) {
+			$obj = $this->load($item);
+			
+			$okay = true;
+			
+			foreach ($query as $key => $value) {
+				if (!property_exists($obj, $key) || $obj->$key != $value) {
+					$okay = false;
+				}
+			}
+			
+			if ($okay) {
+				return $item;
+			}
+		}
+		
+		return null;
+	}
 }
 
 class RevisionDB {
