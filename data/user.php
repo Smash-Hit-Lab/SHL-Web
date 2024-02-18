@@ -1197,6 +1197,13 @@ $gEndMan->add("account-edit", function (Page $page) {
 			
 			$page->add($form);
 			
+			$page->heading(2, "Bind your account to Discord");
+			$page->para("If you want to be able to log in using Discord, you can use this to set your current Discord account as being assocaited with your Smash Hit Lab account. You can also use it to change which Discord account your SHL account is bound with.");
+			if ($user->discord_uid) {
+				$page->para("<b>Your account is currently bound to a Discord account. Discord user ID: $user->discord_uid</b>");
+			}
+			$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary\" style=\"background: #5065F6;\">Bind to Discord</button></a>");
+			
 			$page->heading(2, "Change your password");
 			$page->add("<p>If you would like to change your password, this can happen here. If you think your account has been hacked please contact staff.</p><p><a href=\"./?a=account-change-password\"><button class=\"btn btn-outline-primary\">Change password</button></a></p>");
 			

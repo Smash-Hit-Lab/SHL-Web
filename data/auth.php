@@ -57,17 +57,18 @@ function auth_login_form(Page $page) {
 	$form->password("password", "Password", "Your password was sent to your email when your account was created.");
 	$form->submit("Login");
 	
-	$page->force_bs();
-	$page->add("<div class=\"card auth-form-box\" style=\"max-width: 50em; margin: auto;\"><div class=\"card-body\">");
+	$page->add("<div class=\"card auth-form-box\" style=\"max-width: 30em; margin: auto;\"><div class=\"card-header\"><b>Log in</b></div><ul class=\"list-group list-group-flush\"><li class=\"list-group-item\">");
 	
 	// Heading and text
-	$page->heading(1, "Log in", "20pt");
-	$page->para("Enter your handle and password to log in to the Smash Hit Lab. Don't have an account? <a href=\"./?a=auth-register\">Create an account!</a>");
+	$page->para("The recommended way to log in is using Discord!");
+	$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary w-100\" style=\"background: #5065F6;\">Log in using Discord</button></a>");
+	$page->add("</li><li class=\"list-group-item\">");
+	$page->para("You can also enter your handle and password to log in to the Smash Hit Lab.");
 	
 	// Add form
 	$page->add($form);
 	
-	$page->add("</div></div>");
+	$page->add("</li></ul></div>");
 	
 	// Add the global footer
 	$page->global_footer();
@@ -420,6 +421,8 @@ function discord_bind_user(Page $page, string $discord_uid) {
 	$user->set_discord_uid($discord_uid);
 	$user->save();
 	
+	alert("User account @$user->name was bound to <@$discord_uid>", "./@$user->name");
+	
 	$page->info("Success", "Your Discord account and Smash Hit Lab account have been bound! You can now use Discord to log in.");
 }
 
@@ -452,6 +455,8 @@ function discord_user_create(Page $page, string $discord_uid, string $base_name)
 	$user = new User($handle);
 	$user->set_discord_uid($discord_uid);
 	$user->save();
+	
+	alert("User @$handle was registered using Discord auth", "./@$handle");
 	
 	discord_user_login($page, $handle);
 }

@@ -56,6 +56,10 @@ class Form {
 		$this->container_type = $type;
 	}
 	
+	function add(string $data) {
+		$this->body .= $data;
+	}
+	
 	function textbox(string $name, string $title, string $desc, ?string $value = "", bool $enabled = true) {
 		$value = ($value === null ? "" : $value);
 		
