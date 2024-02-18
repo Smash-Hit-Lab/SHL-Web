@@ -416,7 +416,7 @@ class User {
 			$this->display = (property_exists($info, "display") ? $info->display : $info->name);
 			$this->pronouns = (property_exists($info, "pronouns") ? $info->pronouns : "");
 			$this->password = $info->password;
-			$this->discord_uid = (property_exists($info, "pw_reset") ? $info->pw_reset : null);
+			$this->discord_uid = (property_exists($info, "discord_uid") ? $info->discord_uid : null);
 			$this->pw_reset = (property_exists($info, "pw_reset") ? $info->pw_reset : "");
 			$this->tokens = $info->tokens;
 			$this->email = $info->email ? $info->email : "";
@@ -1199,7 +1199,7 @@ $gEndMan->add("account-edit", function (Page $page) {
 			
 			$page->heading(2, "Bind your account to Discord");
 			$page->para("If you want to be able to log in using Discord, you can use this to set your current Discord account as being assocaited with your Smash Hit Lab account. You can also use it to change which Discord account your SHL account is bound with.");
-			if ($user->discord_uid) {
+			if (isset($user->discord_uid) && $user->discord_uid !== null) {
 				$page->para("<b>Your account is currently bound to a Discord account. Discord user ID: $user->discord_uid</b>");
 			}
 			$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary\" style=\"background: #5065F6;\">Bind to Discord</button></a>");
