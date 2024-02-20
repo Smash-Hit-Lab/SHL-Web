@@ -206,8 +206,8 @@ function styles_darker(string $col) : string {
 $gEndMan->add("generate-logo-coloured", function(Page $page) {
 	$cb = str_split(md5($page->get("seed")), 6);
 	
-	$bg = $cb[0];
-	$fg = $cb[1];
+    $fg = $cb[1];
+	$bg = ($page->has("uniform")) ? (styles_darker(styles_darker($fg))) : ($cb[0]);
 	
 	$page->type("image/svg+xml");
 	$page->allow_cache();

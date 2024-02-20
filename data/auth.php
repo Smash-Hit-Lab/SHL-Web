@@ -44,34 +44,41 @@ function auth_login_availability(Page $page, ?string $handle = null) {
 }
 
 function auth_login_form(Page $page) {
-	// Global header
-	$page->global_header();
-	
 	// Check if logins are enabled
 	auth_login_availability($page);
 	
-	// Create the login form
-	$form = new Form("./?a=auth-login&submit=1");
-	$form->set_container_type(FORM_CONTAINER_BLANK);
-	$form->textbox("handle", "Handle", "The handle is the account name that you signed up for.");
-	$form->password("password", "Password", "Your password was sent to your email when your account was created.");
-	$form->submit("Login");
+	$page->add("<div class=\"card auth-form-box\" style=\"max-width: 30em; margin: auto;\"><div class=\"card-header\"><b>Log in or sign up</b></div><ul class=\"list-group list-group-flush\"><li class=\"list-group-item\">");
 	
-	$page->add("<div class=\"card auth-form-box\" style=\"max-width: 30em; margin: auto;\"><div class=\"card-header\"><b>Log in</b></div><ul class=\"list-group list-group-flush\"><li class=\"list-group-item\">");
-	
-	// Heading and text
-	$page->para("The recommended way to log in is using Discord!");
-	$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary w-100\" style=\"background: #5065F6;\">Log in using Discord</button></a>");
-	$page->add("</li><li class=\"list-group-item\">");
-	$page->para("You can also enter your handle and password to log in to the Smash Hit Lab.");
-	
-	// Add form
-	$page->add($form);
+	if (!$page->has("nodiscord")) {
+		$page->add("<p class=\"card-text text-body-secondary\">By logging in or signing up, you agree to our <a href=\"./!tos\">Terms of Service</a> and <a href=\"./!privacy\">Privacy Policy</a>. You agree that you are at least 16 years or older and are able to legally access the service.</p>");
+		$page->add("</li><li class=\"list-group-item\">");
+		
+		// Discord
+		$page->para("The recommended way to log in or sign up is using Discord!");
+		$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary w-100\" style=\"background: #5065F6;\">Log in or sign up using Discord</button></a>");
+		$page->add("</li><li class=\"list-group-item\">");
+		
+		// No discord
+		$page->para("If you made an account without using Discord, you can also sign in with a password:");
+		$page->para("<a href=\"./?a=auth-login&nodiscord=1\"><button type=\"button\" class=\"btn btn-outline-secondary w-100\">Log in using password</button></a>");
+		
+		// Other options
+		$page->add("</li><li class=\"list-group-item\">");
+		$page->para("You can find some other sign up options here:");
+		$page->para("<a href=\"./?a=auth-register\"><button type=\"button\" class=\"btn btn-outline-secondary w-100\">Other sign up options</button></a>");
+	}
+	else {
+		$form = new Form("./?a=auth-login&submit=1");
+		$form->set_container_type(FORM_CONTAINER_BLANK);
+		$form->textbox("handle", "Handle", "The handle is the account name that you signed up for.");
+		$form->password("password", "Password", "Your password was sent to your email when your account was created.");
+		$form->submit("Login");
+		
+		$page->para("Enter your handle and password to log in to the Smash Hit Lab.");
+		$page->add($form);
+	}
 	
 	$page->add("</li></ul></div>");
-	
-	// Add the global footer
-	$page->global_footer();
 }
 
 function auth_login_action(Page $page) {
@@ -211,41 +218,45 @@ function auth_register_first_user() {
 }
 
 function auth_register_form(Page $page) {
-	// Global header
-	$page->global_header();
-	
 	// Check if logins are enabled
 	auth_register_availability($page);
 	
-	// Create the login form
-	$form = new Form("./?a=auth-register&submit=1");
-	$form->textbox("handle", "Handle", "Pick a handle name that you would like. Please note that you can't change it later.");
-	$form->password("password", "Password", "Your password should be at least 12 characters long and be different from any other password you've used. If you leave this blank, a secure password will be generated for you.", "", true, true);
-	$form->day("birth", "Birthday", "Please enter your birthday so we can verify that you are old enough to join the Smash Hit Lab.");
-	$form->container("Terms", "Terms help protect us from each other and set standards on how we should behave.", "
-			<p>When you sign up for an account, you agree to the following documents:</p>
-			<ul>
-				<li><a href=\"./?p=tos\">Terms of Service</a></li>
-				<li><a href=\"./?p=privacy\">Privacy Policy</a></li>
-				<li><a href=\"./?p=disclaimer\">General Disclaimers</a></li>
-			</ul>
-			<p>You need to be 16 or older in order to use the Smash Hit Lab. We will remove your account if we find that you are under 16 years old.</p>");
-	$form->submit("Create account");
-	
-	$page->force_bs();
-	$page->add("<div class=\"auth-form-box\">");
-	
-	// Heading and text
-	$page->heading(1, "Create an account", "20pt");
-	$page->para("To create an account at the Smash Hit Lab, decide what your handle will be, enter your email address and brithdate, then create your account. Already have an account? <a href=\"./?a=auth-login\">Log in!</a>");
-	
-	// Add form
-	$page->add($form);
-	
-	$page->add("</div>");
-	
-	// Add the global footer
-	$page->global_footer();
+	if (!$page->has("nodiscord")) {
+		$page->add("<div class=\"card auth-form-box\" style=\"max-width: 30em; margin: auto;\"><div class=\"card-header\"><b>Create an account</b></div><ul class=\"list-group list-group-flush\"><li class=\"list-group-item\">");
+		
+		// Heading and text
+		$page->para("The recommended way to sign up is using Discord!");
+		$page->para("<a href=\"./?a=auth-discord\"><button type=\"button\" class=\"btn btn-primary w-100\" style=\"background: #5065F6;\">Sign up using Discord</button></a>");
+		$page->add("</li><li class=\"list-group-item\">");
+		$page->para("If you are making a bot or cannot use Discord, you can also sign up with a password.");
+		$page->para("<a href=\"./?a=auth-register&nodiscord=1\"><button type=\"button\" class=\"btn btn-outline-secondary w-100\">Sign up with a password</button></a>");
+		
+		$page->add("</li></ul></div>");
+	}
+	else {
+		// Heading and text
+		$page->heading(1, "Create an account", "20pt");
+		$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">Starting soon, you will need to be logged in to a verified account to create a new password authenticated account. Any regular users should now use Discord to log in as it provides more security options.</div></div>");
+		
+		// Create the login form
+		$form = new Form("./?a=auth-register&submit=1");
+		$form->textbox("handle", "Handle", "A unique identifying name for the new account.");
+		$form->password("password", "Password", "Account passwords should be at least 12 characters long. A secure password will be generated if this is left blank.", "", true, true);
+		$form->container("Terms", "When you sign up for an account, you agree to the listed terms.", "
+				<ul>
+					<li><a href=\"./?p=tos\">Terms of Service</a></li>
+					<li><a href=\"./?p=privacy\">Privacy Policy</a></li>
+					<li><a href=\"./?p=disclaimer\">General Disclaimers</a></li>
+				</ul>");
+		$form->submit("Create new bot account");
+		
+		$page->add("<div class=\"auth-form-box\">");
+		
+		// Add form
+		$page->add($form);
+		
+		$page->add("</div>");
+	}
 }
 
 function auth_register_action(Page $page) {
@@ -256,17 +267,12 @@ function auth_register_action(Page $page) {
 	$handle = $page->get("handle", true, 24);
 	$email = $page->get("email", $email_required, 300);
 	$ip = crush_ip();
-	$birthdate = datetounix($page->get("birth-day"), $page->get("birth-month"), $page->get("birth-year"));
 	
 	// Check if we can register
 	auth_register_availability($page);
 	
-	$gEvents->trigger("user.register.before", $page);
-	
 	// Blocked IP address check
 	if (is_ip_blocked($ip)) {
-		$gEvents->trigger("user.register.failed.ip_block", $page);
-		
 		$page->info("Blocked location", "This location has been denylisted and cannot be used for logins or account registers.");
 	}
 	
@@ -277,16 +283,7 @@ function auth_register_action(Page $page) {
 	
 	// See if the user already exists
 	if (user_exists($handle)) {
-		$gEvents->trigger("user.register.failed.user_exists", $page);
-		
 		$page->info("User already exists", "There is already a user with the handle that you chose. Please try another handle.");
-	}
-	
-	// Check if the user is of age
-	if ($birthdate > (time() - 60 * 60 * 24 * 365 * 16)) {
-		$gEvents->trigger("user.register.failed.underage", $page);
-		
-		$page->info("Too young", "Unforunately, you are too young to use our website. If you entered your birthday incorrectly, please try again.");
 	}
 	
 	// Anything bad that can happen should be taken care of by the database...
@@ -315,16 +312,6 @@ function auth_register_action(Page $page) {
 		$password = $user->new_password();
 	}
 	
-	// Password email
-	// Yes there is a more readable version of this available as the original
-	// HTML file. :)
-	$body = "<!DOCTYPE html>\n<html>\n\t<head>\n\t\t<title>Smash Hit Lab Account Details</title>\n\t\t<style>\n\t\t\t@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;700&display=swap');\n\t\t\t\n\t\t\t.body {\n\t\t\t\tfont-family: \"Titillium Web\", monospace, sans-serif;\n\t\t\t}\n\t\t\t\n\t\t\t.main {\n\t\t\t\tmargin: 1em auto;\n\t\t\t\tpadding: 0.5em;\n\t\t\t\tborder-radius: 0.5em;\n\t\t\t\tmax-width: min(75%, 50em);\n\t\t\t}\n\t\t\t\n\t\t\tp {\n\t\t\t\tfont-size: 14pt;\n\t\t\t}\n\t\t\t\n\t\t\t.box {\n\t\t\t\tdisplay: grid;\n\t\t\t\tgrid-template-columns: 150px auto;\n\t\t\t}\n\t\t\t\n\t\t\t.box-key {\n\t\t\t\tgrid-column: 1;\n\t\t\t\tgrid-row: 1;\n\t\t\t}\n\t\t\t\n\t\t\t.box-value {\n\t\t\t\tgrid-column: 2;\n\t\t\t\tgrid-row: 1;\n\t\t\t}\n\t\t</style>\n\t</head>\n\t<body class=\"body\">\n\t\t<div class=\"main\">\n\t\t\t<p>Hello $handle!</p>\n\t\t\t<p>It seems like you registered an account at the <a href=\"https://smashhitlab.000webhostapp.com/?p=home\">Smash Hit Lab</a> from the IP address <a href=\"https://www.shodan.io/host/$ip\">$ip</a>. If it wasn't you, please report this email to <a href=\"mailto:contactcdde@protonmail.ch\">contactcdde@protonmail.ch</a> and do not mark it as spam.</p>\n\t\t\t<p>Assuming this was you, the username and password for your account is:</p>\n\t\t\t<div class=\"box\">\n\t\t\t\t<div class=\"box-key\"><p><b>Username</b></p></div>\n\t\t\t\t<div class=\"box-value\"><p>$handle</p></div>\n\t\t\t</div>\n\t\t\t<div class=\"box\">\n\t\t\t\t<div class=\"box-key\"><p><b>Password</b></p></div>\n\t\t\t\t<div class=\"box-value\"><p>$password</p></div>\n\t\t\t</div>\n\t\t\t<p>You can <a href=\"https://smashhitlab.000webhostapp.com/?p=login\">log in here</a>.</p>\n\t\t\t<p>Thank you!</p>\n\t\t</div>\n\t</body>\n</html>\n";
-	
-	// If we are configured to send passwords by email, then do so
-	if ($email_required) {
-		mail($email, "Smash Hit Lab Registration", $body, array("MIME-Version" => "1.0", "Content-Type" => "text/html; charset=utf-8"));
-	}
-	
 	// Alert the admins of the new account
 	alert("New user account @$handle was registered", "./@$handle");
 	
@@ -335,9 +322,6 @@ function auth_register_action(Page $page) {
 	
 	// Save the user's data
 	$user->save();
-	
-	// Finished event
-	$gEvents->trigger("user.register.after", $page);
 	
 	// Print message
 	if ($email_required) {
