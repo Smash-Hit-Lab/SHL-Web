@@ -102,6 +102,7 @@ $gEndMan->add("contest-create", function (Page $page) {
 			$page->force_bs();
 			$page->title("Create a new contest");
 			$page->heading(1, "Create a new contest");
+			$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">Contests are deprecated and will be removed soon.</div></div>");
 			
 			$form = new Form("./?a=contest-create&submit=1");
 			$form->textbox("title", "Title", "The name of the contest.");
@@ -147,6 +148,7 @@ $gEndMan->add("contest-view", function (Page $page) {
 	
 	// Contest title and basic stats
 	$page->heading(1, $contest->title);
+	$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">Contests are deprecated and will be removed soon.</div></div>");
 	
 	if ($user && $contest->creator === $user->name) {
 		$page->link_button("", "Edit contest info", "./?a=contest-edit&id=$contest_id", true);
@@ -220,6 +222,7 @@ $gEndMan->add("contest-edit", function (Page $page) {
 			$page->force_bs();
 			$page->title("Edit $contest->title");
 			$page->heading(1, "Edit $contest->title");
+			$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">Contests are deprecated and will be removed soon.</div></div>");
 			
 			$form = new Form("./?a=contest-edit&id=$contest->id&submit=1");
 			$form->textbox("title", "Title", "The name of the contest.", $contest->title);
@@ -265,6 +268,7 @@ $gEndMan->add("contest-submit", function (Page $page) {
 		$page->force_bs();
 		$page->title("Submit to $contest->title");
 		$page->heading(1, "Submit to $contest->title");
+		$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">Contests are deprecated and will be removed soon.</div></div>");
 		
 		$form = new Form("./?a=contest-submit&id=$contest_id&submit=1");
 		
