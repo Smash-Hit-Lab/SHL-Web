@@ -233,8 +233,8 @@ class Page {
 		$this->add($a);
 	}
 	
-	function link_button(string $icon, string $title, string $url, bool $primary = false) : void {
-		$this->add("<a href=\"$url\"><button class=\"btn " . ($primary ? "btn-primary" : "btn-outline-secondary") . "\">$title</button></a>");
+	function link_button(string $icon, string $title, string $url, bool $primary = false, string $style = "primary", string $classes = "") : void {
+		$this->add("<a href=\"$url\"><button class=\"btn btn-" . ($primary ? "" : "outline-") . "$style $classes\">$title</button></a>");
 	}
 	
 	function global_header() : void {

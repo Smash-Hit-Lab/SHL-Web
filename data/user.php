@@ -1300,31 +1300,38 @@ $gEndMan->add("user-view", function (Page $page) {
 	</div>
 	</div></div>");
 	
-	$page->add("<nav style=\"margin-bottom: 20px;\">
-			<div class=\"nav nav-tabs\">
-				<button class=\"nav-link active\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\">About</button>
-				<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\">Actions</button>
-				<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\">Comments</button>
-			</div>
-		</nav>");
+	// $page->add("<nav style=\"margin-bottom: 20px;\">
+	// 		<div class=\"nav nav-tabs\">
+	// 			<button class=\"nav-link active\" id=\"nav-home-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-home\" type=\"button\" role=\"tab\" aria-controls=\"nav-home\" aria-selected=\"true\">Home</button>
+	// 			<button class=\"nav-link\" id=\"nav-contact-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-contact\" type=\"button\" role=\"tab\" aria-controls=\"nav-contact\" aria-selected=\"false\">Actions</button>
+	// 			<button class=\"nav-link\" id=\"nav-profile-tab\" data-bs-toggle=\"tab\" data-bs-target=\"#nav-profile\" type=\"button\" role=\"tab\" aria-controls=\"nav-profile\" aria-selected=\"false\">Comments</button>
+	// 		</div>
+	// 	</nav>");
 	
-	$page->add("<div class=\"tab-content\" id=\"nav-tabContent\">");
-	
-	$page->add("<div class=\"tab-pane fade show active\" id=\"nav-home\" role=\"tabpanel\" aria-labelledby=\"nav-home-tab\" tabindex=\"0\">");
+// 	$page->add("<div class=\"tab-content\" id=\"nav-tabContent\">");
+// 	
+// 	$page->add("<div class=\"tab-pane fade show active\" id=\"nav-home\" role=\"tabpanel\" aria-labelledby=\"nav-home-tab\" tabindex=\"0\">");
 	
 	if ($user->is_banned()) {
-		$page->add("<div class=\"card border-danger\"><div class=\"card-body text-danger\">This user is banned until " . $user->unban_date() . ".</div></div>");
+		$page->add("<div class=\"card border-danger mb-3\"><div class=\"card-body text-danger\">This user is banned until " . $user->unban_date() . ".</div></div>");
 	}
 	
+	$page->add("<div style=\"display: grid; grid-template-columns: 20em auto;\">");
+	
+	// Left side
+	$page->add("<div style=\"grid-column: 1;\">");
+	
+	// About
 	if ($user->about) {
-		$page->add("<div class=\"card\" style=\"margin-bottom: 10px;\"><div class=\"card-header\"><b>Description</b></div><div class=\"card-body\">");
+		$page->add("<div class=\"card mb-3\"><div class=\"card-header\"><b>Description</b></div><div class=\"card-body\">");
 		$pd = new Parsedown();
 		$pd->setSafeMode(true);
 		$page->add(str_replace("<p>", "<p class=\"card-text\">", $pd->text($user->about)));
 		$page->add("</div></div>");
 	}
 	
-	$page->add("<div class=\"card\" style=\"margin-bottom: 10px;\"><div class=\"card-header\"><b>Statistics</b></div><div class=\"card-body\">");
+	// Stats
+	$page->add("<div class=\"card mb-3\"><div class=\"card-header\"><b>Statistics</b></div><div class=\"card-body\">");
 	user_show_stat($page, "Joined", Date("Y-m-d", $user->created));
 	user_show_stat($page, "Last login", Date("Y-m-d", $user->login_time));
 	if ($user->count_roles()) {
@@ -1335,52 +1342,59 @@ $gEndMan->add("user-view", function (Page $page) {
 	}
 	$page->add("</div></div>");
 	
-	$page->add("</div><div class=\"tab-pane fade\" id=\"nav-profile\" role=\"tabpanel\" aria-labelledby=\"nav-profile-tab\" tabindex=\"0\">");
-	
-	$disc = new Discussion($user->wall);
-	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
-	
-	$page->add("</div>");
-	$page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">");
-	
+	// Actions
+	$page->add("<div class=\"card mb-3\"><div class=\"card-header\"><b>Actions</b></div><div class=\"card-body\">");
 	if ($stalker && $stalker->is_mod()) {
+		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name&key=" . $stalker->get_sak(), false, "success", "w-100 mb-2");
+		
 		// If the wanted user isn't admin, we can ban them
 		if (!$user->is_admin() && $stalker->name != $user->name) {
-			$page->heading(3, "Ban");
-			$page->para("Ban or unban this user.");
-			$page->link_button("", $user->is_banned() ? "Unban user" : "Ban user", "./?a=user_ban&handle=$user->name");
+			$title = $user->is_banned() ? "Unban user" : "Ban user";
+			$page->link_button("", $title, "./?a=user_ban&handle=$user->name", false, "danger", "w-100 mb-2");
 		}
 		
 		// Only admins can change ranks
-		if ($stalker->is_admin()) {
-			$page->heading(3, "Roles");
-			$page->para("Actions related to roles and premissions.");
-			$page->link_button("", "Change roles", "./?a=user_roles&handle=$user->name");
-		}
-		
-		$page->heading(3, "Verification");
-		$page->para("Verification allows normal users to access more powerful actions.");
-		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name&key=" . $stalker->get_sak());
+		// if ($stalker->is_admin()) {
+		// 	$page->heading(3, "Roles");
+		// 	$page->para("Actions related to roles and premissions.");
+		// 	$page->link_button("", "Change roles", "./?a=user_roles&handle=$user->name");
+		// }
 	}
 	
 	// Block user
 	if ($stalker && $stalker->name != $user->name) {
-		$page->heading(3, "Blocking");
-		$page->para("Blocking this user will allow you to hide them from your account.");
-		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak());
+		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak(), false, "danger", "w-100 mb-2");
 	}
 	else if ($stalker) {
-		$page->heading(3, "Account");
-		$page->para("Settings related to your own account.");
-		$page->link_button("", "Edit account", "./?a=account-edit");
+		$page->link_button("", "Edit account", "./?a=account-edit", true, "primary", "w-100 mb-2");
 	}
 	else {
 		$page->para("<i>There are no actions for you to preform.</i>");
 	}
+	$page->add("</div></div>");
+	
 	
 	$page->add("</div>");
 	
+	// Right side
+	$page->add("<div class=\"ps-3\" style=\"grid-column: 2;\">");
+	$disc = new Discussion($user->wall);
+	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
 	$page->add("</div>");
+	
+	$page->add("</div>");
+	
+	// $page->add("</div><div class=\"tab-pane fade\" id=\"nav-profile\" role=\"tabpanel\" aria-labelledby=\"nav-profile-tab\" tabindex=\"0\">");
+	
+	// $disc = new Discussion($user->wall);
+	// $page->add($disc->render_reverse("Comments", "./@" . $user->name));
+	
+	// $page->add("</div>");
+	// $page->add("<div class=\"tab-pane fade\" id=\"nav-contact\" role=\"tabpanel\" aria-labelledby=\"nav-contact-tab\" tabindex=\"0\">");
+	
+	// $page->add("</div>");
+	
+	// $page->add("</div>");
 });
 
 function user_show_stat(Page $page, string $title, string $value) {
