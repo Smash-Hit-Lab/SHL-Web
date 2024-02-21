@@ -521,11 +521,12 @@ class User {
 		 * Delete the user
 		 */
 		
+		event_trigger("user.delete", $this);
+		
+		// We do these manually, we need to make sure they happen last.
+		
 		// Wipe tokens
 		$this->wipe_tokens();
-		
-		// Wipe discussions
-		discussion_nuke_comments_by($this->name);
 		
 		// Delete the user
 		$db = new Database("user");

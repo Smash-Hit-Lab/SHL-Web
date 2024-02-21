@@ -390,3 +390,11 @@ $gEndMan->add("get-ads-data", function (Page $page) {
 		$page->add(base64_decode($sv->ad_xml));
 	}
 });
+
+$gEvents->add("user.delete", function (User $user) {
+	for ($i = 0; $i < sizeof($user->mods); $i++) {
+		$id = $user->mods[$i];
+		$sv = new ServiceMod($id);
+		$sv->delete();
+	}
+});

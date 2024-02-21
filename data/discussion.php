@@ -834,3 +834,8 @@ $gEndMan->add("discussion-hide", function (Page $page) {
 	$page->set("message", "The comment has been hidden.");
 	$page->set("next_sak", $user->get_sak());
 });
+
+$gEvents->add("user.delete", function (User $user) {
+	// Wipe discussions
+	discussion_nuke_comments_by($user->name);
+});

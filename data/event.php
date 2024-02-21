@@ -42,3 +42,9 @@ class EventManager {
 }
 
 $gEvents = new EventManager();
+
+function event_trigger(string $name, mixed $extra = null) : int {
+	global $gEvents;
+	
+	return $gEvents->trigger($name, $extra);
+}
