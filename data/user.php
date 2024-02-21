@@ -1316,7 +1316,7 @@ $gEndMan->add("user-view", function (Page $page) {
 		$page->add("<div class=\"card border-danger mb-3\"><div class=\"card-body text-danger\">This user is banned until " . $user->unban_date() . ".</div></div>");
 	}
 	
-	$page->add("<div style=\"display: grid; grid-template-columns: 20em auto;\">");
+	$page->add("<div class=\"user-body-container\">");
 	
 	// Left side
 	$page->add("<div style=\"grid-column: 1;\">");
@@ -1343,41 +1343,32 @@ $gEndMan->add("user-view", function (Page $page) {
 	$page->add("</div></div>");
 	
 	// Actions
-	$page->add("<div class=\"card mb-3\"><div class=\"card-header\"><b>Actions</b></div><div class=\"card-body\">");
-	if ($stalker && $stalker->is_mod()) {
-		$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name&key=" . $stalker->get_sak(), false, "success", "w-100 mb-2");
+	if ($stalker) {
+		$page->add("<div class=\"card mb-3\"><div class=\"card-header\"><b>Actions</b></div><div class=\"card-body\">");
 		
-		// If the wanted user isn't admin, we can ban them
-		if (!$user->is_admin() && $stalker->name != $user->name) {
-			$title = $user->is_banned() ? "Unban user" : "Ban user";
-			$page->link_button("", $title, "./?a=user_ban&handle=$user->name", false, "danger", "w-100 mb-2");
+		if ($stalker->name == $user->name) {
+			$page->link_button("", "Edit account", "./?a=account-edit", true, "primary", "w-100 mb-2");
 		}
 		
-		// Only admins can change ranks
-		// if ($stalker->is_admin()) {
-		// 	$page->heading(3, "Roles");
-		// 	$page->para("Actions related to roles and premissions.");
-		// 	$page->link_button("", "Change roles", "./?a=user_roles&handle=$user->name");
-		// }
+		if ($stalker->is_mod()) {
+			$page->link_button("", $user->verified ? "Unmark as verified" : "Mark as verified", "./?a=user-verify&handle=$user->name&key=" . $stalker->get_sak(), false, "success", "w-100 mb-2");
+		}
+		
+		if ($stalker->name != $user->name) {
+			$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak(), false, "danger", "w-100 mb-2");
+		}
+		
+		if ($stalker->name != $user->name && $stalker->is_mod()) {
+			$page->link_button("", $user->is_banned() ? "Unban user" : "Ban user", "./?a=user_ban&handle=$user->name", false, "danger", "w-100 mb-2");
+		}
+		
+		$page->add("</div></div>");
 	}
-	
-	// Block user
-	if ($stalker && $stalker->name != $user->name) {
-		$page->link_button("", "Block user", "./?a=account-toggle-block&handle=$user->name&key=" . $stalker->get_sak(), false, "danger", "w-100 mb-2");
-	}
-	else if ($stalker) {
-		$page->link_button("", "Edit account", "./?a=account-edit", true, "primary", "w-100 mb-2");
-	}
-	else {
-		$page->para("<i>There are no actions for you to preform.</i>");
-	}
-	$page->add("</div></div>");
-	
 	
 	$page->add("</div>");
 	
 	// Right side
-	$page->add("<div class=\"ps-3\" style=\"grid-column: 2;\">");
+	$page->add("<div class=\"user-comment-container\" style=\"grid-column: 2;\">");
 	$disc = new Discussion($user->wall);
 	$page->add($disc->render_reverse("Comments", "./@" . $user->name));
 	$page->add("</div>");
