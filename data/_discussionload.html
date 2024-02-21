@@ -46,6 +46,10 @@
 					string += "<button class=\"btn btn-outline-primary button secondary\" onclick=\"ds_add_reply('" + author + "');\">Reply</button> ";
 					break;
 				}
+				case "edit": {
+					string += "<button class=\"btn btn-outline-primary button secondary\" onclick=\"ds_start_edit('" + index + "');\">Edit</button> ";
+					break;
+				}
 				default: {
 					break;
 				}
@@ -145,8 +149,13 @@
 	}
 	
 	function ds_update() {
-		let body = document.getElementById("discussions-" + DiscussionID + "-entry").value;
-		ds_request("POST", "./?a=discussion_update&id=" + DiscussionID + "&index=-1&key=" + UserSAK + "&api=1", ds_update_handle, body);
+		let index = "-1";//document.getElementById(`discussions-${DiscussionID}-index`).value;
+		let body = document.getElementById(`discussions-${DiscussionID}-entry`).value;
+		ds_request("POST", `./?a=discussion_update&id=${DiscussionID}&index=${index}&key=${UserSAK}&api=1`, ds_update_handle, body);
+	}
+	
+	function ds_start_edit(index) {
+		window.open(`./?a=discussion-edit&id=${DiscussionID}&index=${index}`);
 	}
 	
 	function ds_hide_handle() {

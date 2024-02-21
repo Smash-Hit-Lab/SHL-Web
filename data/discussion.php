@@ -334,34 +334,41 @@ class Discussion {
 			}
 		}
 		
-		$stalker = get_name_if_authed();
-		$stalker_user = $stalker ? new User($stalker) : null;
+		$stalker = user_get_current();
 		
 		// Add extra metadata and format them
 		for ($i = 0; $i < sizeof($comments); $i++) {
 			$user = new User($comments[$i]->author);
 			
 			// If not blocked, display the comment normally.
-			if (!($stalker && user_block_has($stalker, $user->name))) {
+			if (!($stalker && user_block_has($stalker->name, $user->name))) {
 				$comments[$i]->display = $user->get_display();
 				$comments[$i]->image = $user->get_image();
 				$comments[$i]->body = $comments[$i]->render_body();
-				$comments[$i]->actions = ["reply"];
+				$comments[$i]->actions = [];
 				$comments[$i]->badge = get_user_badge($user);
 				$comments[$i]->pronouns = $user->pronouns;
+				
+				if ($stalker) {
+					$comments[$i]->actions[] = "reply";
+					
+					if ($stalker->name == $comments[$i]->author) {
+						$comments[$i]->actions[] = "edit";
+					}
+				}
 			}
 			// If blocked, give a fake comment.
 			else {
 				$comments[$i]->author = "???";
 				$comments[$i]->display = "Blocked user";
 				$comments[$i]->image = "./?a=generate-logo-coloured&seed=$i";
-				$comments[$i]->body = "<i>[You blocked the user who wrote this comment or the user who wrote this comment blocked you, so it can't be displayed.]</i>";
+				$comments[$i]->body = "<p><i>[You blocked the user who wrote this comment or the user who wrote this comment blocked you, so it can't be displayed.]</i></p>";
 				$comments[$i]->actions = [];
 				$comments[$i]->badge = "";
 				$comments[$i]->pronouns = "";
 			}
 			
-			if ($stalker && $stalker_user->is_mod() || (get_name_if_authed() == $user->name)) {
+			if ($stalker && $stalker->is_mod() || (get_name_if_authed() == $user->name)) {
 				$comments[$i]->actions[] = "hide";
 			}
 		}
@@ -650,7 +657,19 @@ function discussion_update_new() {
 		}
 	}
 	else {
-		echo "{\"error\": \"not_supported\", \"message\": \"Updating existing comments is not supported.\"}";
+		$status = $discussion->update_comment((int) $index, $user->name, $body);
+		
+		if ($status) {
+			echo "{\"error\": \"done\", \"message\": \"Your comment was updated successfully!\"}";
+			
+			// If we reach the comment limit, automatically lock the discussion.
+			if ($discussion->count_all() >= 800 && !$discussion->is_locked()) {
+				$discussion->toggle_locked();
+			}
+		}
+		else {
+			echo "{\"error\": \"not_posted\", \"message\": \"This comment could not be posted. This might happen if you don't have access to the discussion.\"}";
+		}
 	}
 }
 
@@ -833,6 +852,51 @@ $gEndMan->add("discussion-hide", function (Page $page) {
 	$page->set("status", "done");
 	$page->set("message", "The comment has been hidden.");
 	$page->set("next_sak", $user->get_sak());
+});
+
+$gEndMan->add("discussion-edit", function (Page $page) {
+	$user = user_get_current();
+	
+	if (!$user) {
+		$page->info("log in first");
+	}
+	
+	$did = $page->get("id");
+	
+	if (!discussion_exists($did)) {
+		$page->info("No such discussion exists.");
+	}
+	
+	$disc = new Discussion($did);
+	
+	$index = (int) $page->get("index");
+	
+	if ($index < 0 || $index >= $disc->count_all()) {
+		$page->info("Index out of range.");
+	}
+	
+	if (!$page->has("submit")) {
+		$prevcontent = $disc->comments[$index]->hidden ? "(Hidden comment)" : htmlspecialchars($disc->comments[$index]->body);
+		
+		$page->heading(1, "Edit your comment");
+		$page->add("<form action=\"./?a=discussion-edit&amp;submit=1\" method=\"post\">
+	<textarea class=\"form-control mb-3\" name=\"body\" style=\"height: 450px; font-family: monospace;\">$prevcontent</textarea>
+	<input name=\"id\" type=\"hidden\" value=\"$did\"/>
+	<input name=\"index\" type=\"hidden\" value=\"$index\"/>
+	<input class=\"btn btn-primary\" type=\"submit\" value=\"Post edit\"/>
+</form>");
+	}
+	else {
+		$body = $page->get("body", true, 4000, SANITISE_NONE);
+		$status = $disc->update_comment($index, $user->name, $body);
+		
+		if ($status) {
+			$page->info("Comment updated!", "Your comment has been updated successfully!");
+		}
+		else {
+			$page->info("Could not update your comment, sorry!");
+		}
+	}
 });
 
 $gEvents->add("user.delete", function (User $user) {
