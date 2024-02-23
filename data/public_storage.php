@@ -33,6 +33,8 @@ $gEndMan->add("public-upload", function (Page $page) {
 			
 			$gPublicStorage->save($realname, $content);
 			
+			alert("New file $realname uploaded by @$user->name", "./storage/$realname");
+			
 			$page->title("Upload complete");
 			$page->heading(1, "File uploaded!");
 			$page->para("Your file was uploaded as <code><a href=\"./storage/$realname\">$realname</a></code>.");

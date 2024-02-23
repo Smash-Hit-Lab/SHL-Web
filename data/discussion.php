@@ -888,6 +888,8 @@ $gEndMan->add("discussion-edit", function (Page $page) {
 		$status = $disc->update_comment($index, $user->name, $body);
 		
 		if ($status) {
+			alert("User $user->name edited their comment on discussion with id $disc->id\n\nNew content: $body");
+			
 			$page->info("Comment updated!", "Your comment has been updated successfully!");
 		}
 		else {
