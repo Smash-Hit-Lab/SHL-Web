@@ -164,6 +164,19 @@
 										<li><a class="dropdown-item" href="https://discord.gg/7kra7Z3UNn">Discord</a></li>
 									</ul>
 								</li>
+							<?php
+							$u = user_get_current();
+							if ($u && $u->is_verified()) {
+								echo '<li class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										Tools
+									</a>
+									<ul class="dropdown-menu">
+										<li><a class="dropdown-item" href="./?a=public-upload">Upload file</a></li>
+									</ul>
+								</li>';
+							}
+							?>
 							</ul>
 							<!--
 							<form class="d-flex" role="search">
@@ -172,7 +185,6 @@
 							</form>
 							-->
 							<?php
-							$u = user_get_current();
 							if ($u) {
 								echo '<li class="d-flex nav-item dropdown">
 									<a class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="' . $u->display . ' (@' . $u->name . ')">

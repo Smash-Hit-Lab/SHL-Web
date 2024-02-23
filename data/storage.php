@@ -4,6 +4,7 @@
  */
 
 $gStoragePath = "../../data/storage";
+$gPublicStoragePath = "../../public_html/lab/storage";
 
 class SiteStorage {
 	public $path;
@@ -17,7 +18,7 @@ class SiteStorage {
 	}
 	
 	function get_real_path(string $item) : string {
-		return $this->path . "/" . str_replace(".", "_", str_replace("/", "_", $item));
+		return $this->path . "/" . str_replace("/", "_", $item);
 	}
 	
 	function load(string $item) : string {
@@ -38,3 +39,4 @@ class SiteStorage {
 }
 
 $gStorage = new SiteStorage($gStoragePath);
+$gPublicStorage = new SiteStorage($gPublicStoragePath);

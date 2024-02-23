@@ -26,6 +26,7 @@ require_once "mod_services.php";
 require_once "news.php";
 require_once "notifications.php";
 require_once "page.php";
+require_once "public_storage.php";
 require_once "site.php";
 require_once "storage.php";
 require_once "styles.php";

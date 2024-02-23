@@ -133,7 +133,7 @@ class Page {
 		return $value;
 	}
 	
-	function get_file(string $key, string $require_format = null, int $max_size = 400000) {
+	function get_file(string $key, string $require_format = null, int $max_size = 400000, string &$name_out = null) {
 		if (!array_key_exists($key, $_FILES)) {
 			$this->info("Whoops!", "You didn't put the file by id '$key'.");
 		}
@@ -155,6 +155,11 @@ class Page {
 		
 		// Get contents
 		$contents = file_get_contents($file["tmp_name"]);
+		
+		// Write the name out
+		if ($name_out) {
+			$name_out = $name;
+		}
 		
 		// Return contents
 		return $contents;

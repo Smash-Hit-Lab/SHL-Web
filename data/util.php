@@ -51,6 +51,26 @@ function send_discord_message(string $message, string $webhook_url = "") {
 	post($webhook_url, json_encode($body));
 }
 
+$gCustomEmotes = [
+	"TailsHeya" => "https://smashhitlab.000webhostapp.com/lab/storage/5f36e7c6bad6e4d8d6b486efc8d40119a193a64759d649de06562cd5c2710243.webp",
+	"TailsHeh" => "https://smashhitlab.000webhostapp.com/lab/storage/46201a8e8233236f9c21638898e0c06cfdc034f2b261ed6b185c9402d33f1def.png",
+];
+
+function render_markdown(string $body) : string {
+	global $gCustomEmotes;
+	
+	$pd = new Parsedown();
+	$pd->setSafeMode(true);
+	$pd->setBreaksEnabled(true);
+	$body = $pd->text($body);
+	
+	foreach ($gCustomEmotes as $name => $url) {
+		$body = str_replace(":$name:", "<img src=\"$url\" alt=\":$name:\" height=\"24px\"/>", $body);
+	}
+	
+	return $body;
+}
+
 function alert(string $title, string $url = "") {
 	/**
 	 * Add a notification to a user's inbox.

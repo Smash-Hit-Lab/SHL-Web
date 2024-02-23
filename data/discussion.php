@@ -65,10 +65,7 @@ class Comment {
 	}
 	
 	function render_body() {
-		$pd = new Parsedown();
-		$pd->setSafeMode(true);
-		$pd->setBreaksEnabled(true);
-		return $pd->text($this->body);
+		return render_markdown($this->body);
 		// return "<p style=\"white-space: pre-line;\">".htmlspecialchars($this->body)."</p>";
 	}
 }
@@ -415,9 +412,9 @@ class Discussion {
 					$img = "./icon.png";
 				}
 				
-				$base .= "<li class=\"list-group-item\"><div id=\"discussion-$this->id-box\" class=\"comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p>@$name</p><p><textarea id=\"discussions-$this->id-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
+				$base .= "<li class=\"list-group-item\"><div id=\"discussion-$this->id-box\" class=\"comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p><textarea id=\"discussions-$this->id-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
 				
-				$base .= "<p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p><p><button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button></p>";
+				$base .= "<div class=\"d-flex justify-content-between align-items-center\"><span><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p></span><span><button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button></span></div>";
 				
 				$base .= "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div></li>";
 				break;
@@ -624,7 +621,7 @@ function discussion_update_new() {
 	
 	$index = $_GET["index"]; // If it's -1 then it's a new comment
 	
-	$body = file_get_contents("php://input");
+	$body = htmlspecialchars_decode(file_get_contents("php://input"));
 	
 	if (strlen($body) < 1) {
 		echo "{\"error\": \"no_content\", \"message\": \"This comment does not have any content.\"}"; return;
