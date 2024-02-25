@@ -343,8 +343,7 @@ function get_page_name() {
 }
 
 function include_header($bs = false) {
-    $v = (array_key_exists("usebootstrap", $_GET) || $bs) ? "2" : "";
-	include_once("../../data/_header$v.html");
+	include_once("../../data/_header2.html");
 }
 
 function include_static_page() {
@@ -366,6 +365,5 @@ function include_static_page() {
 }
 
 function include_footer($bs = false) {
-    $v = (array_key_exists("usebootstrap", $_GET) || $bs) ? "2" : "";
-	include_once("../../data/_footer$v.html");
+	include_once("../../data/_footer2.html");
 }

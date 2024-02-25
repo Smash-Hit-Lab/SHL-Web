@@ -1341,6 +1341,9 @@ $gEndMan->add("user-view", function (Page $page) {
 	if ($user->youtube) {
 		user_show_stat($page, "YouTube", "<a href=\"https://youtube.com/@$user->youtube\">@$user->youtube</a>");
 	}
+	if ($stalker->is_mod() && $user->discord_uid) {
+		user_show_stat($page, "Discord (ID)", "$user->discord_uid");
+	}
 	$page->add("</div></div>");
 	
 	// Actions
