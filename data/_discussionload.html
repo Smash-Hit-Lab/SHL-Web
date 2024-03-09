@@ -108,8 +108,8 @@
 		
 		let els = document.getElementsByClassName("shl-discussion-item");
 		
-		for (let i = 0; i < els.length; i++) {
-			els[i].remove();
+		while (els.length > 0) {
+			els[0].remove();
 		}
 	}
 	
