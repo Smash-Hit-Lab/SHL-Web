@@ -63,6 +63,12 @@
 		return "<li class=\"list-group-item shl-discussion-item\"><div " + (hidden ? "style=\"opacity: 0.6;\"" : "") + "><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"" + image + "\"/></div><div class=\"comment-card-inner-right\"><div class=\"comment-info-block\"><p><a href=\"./@" + author + "\">" + display + "</a> · @" + author + (pronouns ? (" · " + pronouns) : "") + " · " + time + "</p></div>" + body + ds_render_actions(actions, index, author) + "</div></div></div></li>";
 	}
 	
+	function ds_render_comment_box(el, pfp_url) {
+		if (pfp_url) {
+			el.innerHTML += `<li class=\"list-group-item\"><div id=\"discussion-${DiscussionID}-box\" class=\"comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"${pfp_url}\"/></div><div class=\"comment-card-inner-right\"><div><p><textarea id=\"discussions-${DiscussionID}-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\"></textarea></p><p><input type=\"hidden\" name=\"key\" value=\"${UserSAK}\"><div class=\"d-flex justify-content-between align-items-center\"><span><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p></span><span><button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button></span></div><span id=\"discussions-${DiscussionID}-error\"></span></p></div></div></div></div></li>`;
+		}
+	}
+	
 	function ds_load_handle() {
 		if (this.readyState != 4) {
 			return;
@@ -77,6 +83,10 @@
 				// discussion.innerHTML = "";
 				ds_clear();
 				
+				if (DiscussionBackwards) {
+					ds_render_comment_box(discussion, data["user_pfp"]);
+				}
+				
 				for (let i = 0; i < data["comments"].length; i++) {
 					let comment = data["comments"][(DiscussionBackwards ? (data["comments"].length - i - 1) : i)];
 					let image = escape_string(comment["image"]);
@@ -86,6 +96,10 @@
 					let date = format_time(comment["updated"]);
 					
 					discussion.innerHTML += ds_render_comment(comment["hidden"], image, author, display, date, body, comment["actions"], comment["index"], comment["badge"], comment["pronouns"]);
+				}
+				
+				if (!DiscussionBackwards) {
+					ds_render_comment_box(discussion, data["user_pfp"]);
 				}
 				
 				UserSAK = data["next_sak"];

@@ -412,11 +412,6 @@ class Discussion {
 					$img = "./icon.png";
 				}
 				
-				$base .= "<li class=\"list-group-item\"><div id=\"discussion-$this->id-box\" class=\"comment-edit\"><div class=\"comment-card-inner\"><div class=\"comment-card-inner-left\"><img src=\"$img\"/></div><div class=\"comment-card-inner-right\"><div><p><textarea id=\"discussions-$this->id-entry\" class=\"form-control\" style=\"height: 150px; font-family: monospace;\" name=\"body\" placeholder=\"What would you like to say? (supports markdown)\">$body</textarea></p><p><input type=\"hidden\" name=\"key\" value=\"$sak\">";
-				
-				$base .= "<div class=\"d-flex justify-content-between align-items-center\"><span><p class=\"small-text\">Please make sure to follow our <a href=\"./?n=community-guidelines\">Community Guidelines</a>.</p></span><span><button class=\"btn btn-primary button\" onclick=\"ds_update();\">Post comment</button></span></div>";
-				
-				$base .= "<span id=\"discussions-$this->id-error\"></span></p></div></div></div></div></li>";
 				break;
 			}
 			case "closed": {
@@ -756,7 +751,7 @@ function discussion_poll() {
 	// Send mimetype
 	header('Content-type: application/json');
 	
-	$user = get_name_if_authed();
+	$user = user_get_current();
 	
 	// List the comments
 	$disc = new Discussion($_GET["id"]);
@@ -768,7 +763,8 @@ function discussion_poll() {
 	$result->message = "Loaded discussions successfully!";
 	$result->anything = (sizeof($comments) !== 0);
 	$result->comments = $comments;
-	$result->actor = $user;
+	$result->actor = $user ? $user->name : null;
+	$result->user_pfp = $user ? $user->image : null;
 	$result->next_sak = user_get_sak();
 	
 	// Send json data
